@@ -1,0 +1,2466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="A quiet, private space for a few minutes of evening reflection.">
+  <meta name="theme-color" content="#121417">
+  <!-- These let the page open full-screen when added to a phone's home screen. -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Evening Pages">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Evening Pages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===================================================================
+       COLORS: a dark "Moonrise" palette and a light "Like the painting" one.
+       Change these to restyle the whole app. The script sets
+       data-theme="light" or "dark" on <html> from the Appearance choice.
+       =================================================================== */
+    /* "Moonrise": from a starlight palette Wanyi chose. A pale-sky glow at
+       the top, like moonlight, fades through dusty denim and violet into
+       shadow grey. Pale-sky buttons and moons, like stars. */
+    :root {
+      color-scheme: dark;
+      --bg: #262423;           /* shadow grey, below the fade */
+      --page-fade: linear-gradient(180deg, #9DB4C8 0, #7392B5 110px, #55588A 260px, #3A2C45 440px, #262423 640px);
+      --head-text: #1F1E24;    /* page titles sit on the pale glow */
+      --head-muted: #2E3240;
+      --head-dot: #3A2C45;     /* filled week dots on the glow */
+      --surface: #2D2930;      /* cards: violet grey */
+      --field: #24222A;        /* text boxes */
+      --text: #ECEFF3;
+      --muted: #A9AFBD;
+      --accent: #C9E0EB;       /* pale sky */
+      --accent-strong: #C9E0EB;
+      --accent-soft: #363B4D;
+      --on-accent: #262423;
+      --gold: #C9E0EB;         /* pale-sky moons, like stars */
+      --gold-text: #C9E0EB;    /* search highlights */
+      --gold-soft: #3A2F48;    /* midnight violet */
+      --border: #3D3744;
+      --moon-dark: #3A3640;
+      --moon-ring: #6E6A80;
+      --danger: #E39A8F;
+      --shadow: none;
+      /* "Let it go" scene: one soft moonlight glow over a denim-to-night sky. */
+      --release-scene:
+        radial-gradient(circle at 50% 0%, rgba(201, 224, 235, 0.22), transparent 55%),
+        linear-gradient(180deg, rgba(58, 76, 104, 0.95), rgba(38, 36, 35, 0.96));
+      --nav-height: 64px;
+    }
+
+    /* "Like the painting": from a flamingo-and-jungle painting Wanyi chose.
+       The page fades from gray teal at the top to warm sand, with charcoal
+       buttons and flamingo-coral moons. */
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #E6DCC8;           /* warm sand, below the fade */
+      --page-fade: linear-gradient(180deg, #7C9A97 0, #A7B2A4 220px, #D9CDB7 520px, #E6DCC8 900px);
+      --head-text: #FBF7F0;    /* page titles sit on the teal */
+      --head-muted: #EDE7DC;
+      --head-dot: #E09F77;
+      --surface: #FAF6EF;      /* cards */
+      --field: #FAF6EF;        /* text boxes stand out from the sand */
+      --text: #3B3D40;
+      --muted: #5F5E56;
+      --accent: #545659;       /* charcoal */
+      --accent-strong: #4E6C6B; /* teal links */
+      --accent-soft: #E8E8DA;
+      --on-accent: #F6F1E8;
+      --gold: #E09F77;         /* flamingo coral moons and dots */
+      --gold-text: #8A4F2E;
+      --gold-soft: #F6E3D6;
+      --border: #E2D9C8;
+      --moon-dark: #E9E2D6;
+      --moon-ring: #A49B88;
+      --danger: #A5503F;
+      --shadow: 0 1px 3px rgba(60, 50, 30, 0.08);
+      /* "Let it go" scene: one soft teal glow over deep teal fading to charcoal. */
+      --release-scene:
+        radial-gradient(circle at 50% 0%, rgba(167, 178, 164, 0.3), transparent 60%),
+        linear-gradient(180deg, rgba(78, 108, 107, 0.95), rgba(84, 86, 89, 0.96));
+    }
+
+    /* ===================================================================
+       BASE
+       =================================================================== */
+    * { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      /* The fade is always 900px tall, so short pages end smoothly in the base color. */
+      background: var(--page-fade) top / 100% 900px no-repeat, var(--bg);
+      color: var(--text);
+      /* Inter for English; PingFang / Noto Sans for Chinese. */
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 17px;
+      line-height: 1.55;
+      /* Leave room for the notch at the top and the nav bar at the bottom. */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 24px);
+    }
+
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+    }
+
+    h1, h2, h3 { font-weight: 600; line-height: 1.25; margin: 0; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.12rem; }
+    h3 { font-size: 1rem; margin-top: 18px; }
+    p { margin: 0.4em 0; }
+    a { color: var(--accent-strong); }
+
+    .muted { color: var(--muted); }
+    .small { font-size: 0.88rem; }
+
+    .page-head { padding: 28px 0 14px; }
+    .eyebrow {
+      margin: 0 0 4px;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .greeting { color: var(--muted); margin-top: 8px; }
+    /* Page titles sit on the top of the page, where the fade is brightest. */
+    .page-head h1, .page-head .link-btn { color: var(--head-text); }
+    .page-head .eyebrow, .page-head .greeting, .page-head .muted, .page-head .dot-label { color: var(--head-muted); }
+    .page-head .dot:not(.filled) { border-color: var(--head-muted); }
+    .page-head .dot.filled { background: var(--head-dot); border-color: var(--head-dot); }
+
+    /* The Appearance button in the top corner of Today, and its choices. */
+    .page-head.with-corner { position: relative; }
+    .page-head.with-corner h1 { padding-right: 52px; }
+    .corner-btn {
+      position: absolute;
+      top: 20px;
+      right: 0;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+    .corner-btn svg { width: 22px; height: 22px; }
+    .appearance-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .appearance-choices .btn[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      margin: 14px 0;
+      box-shadow: var(--shadow);
+    }
+
+    /* ===================================================================
+       BUTTONS AND FORM CONTROLS
+       =================================================================== */
+    button, input, textarea { font: inherit; color: inherit; }
+
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      font-size: 0.95rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .btn.danger { border-color: var(--danger); color: var(--danger); }
+    .btn.armed { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+
+    .link-btn {
+      background: none;
+      border: none;
+      padding: 8px 0;
+      min-height: 44px;
+      color: var(--accent-strong);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-size: 0.92rem;
+    }
+
+    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .stack { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+
+    textarea, input[type="search"], input[type="text"] {
+      width: 100%;
+      background: var(--field);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 17px; /* 16px or more stops iPhones from zooming in */
+      line-height: 1.5;
+    }
+    textarea { resize: none; overflow: hidden; min-height: 60px; }
+    textarea:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ===================================================================
+       TODAY
+       =================================================================== */
+    .week-dots { display: flex; gap: 14px; margin-top: 14px; }
+    .day-dot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--moon-ring); }
+    .dot.filled { background: var(--gold); border-color: var(--gold); }
+    .dot.today { border-style: dashed; }
+    .dot-label { font-size: 0.7rem; color: var(--muted); }
+
+    .memory { background: var(--gold-soft); border-color: transparent; }
+    .memory .label { font-size: 0.82rem; color: var(--muted); margin: 0; }
+    .memory .question { font-size: 0.9rem; color: var(--muted); margin-top: 8px; }
+    .memory blockquote { margin: 4px 0 0; font-size: 1.05rem; white-space: pre-wrap; }
+
+    .checkin { border-color: var(--accent); }
+
+    .idea { background: var(--accent-soft); border-color: transparent; }
+    .idea .btn { border-color: var(--accent); }
+    .idea .label { font-size: 0.82rem; color: var(--muted); margin: 0 0 4px; }
+    .help-list { list-style: none; padding: 0; margin: 10px 0 0; }
+    .help-list li { padding: 10px 0; border-top: 1px solid var(--border); }
+    .help-list li:first-child { border-top: none; }
+    .help-name { display: block; font-weight: 600; }
+    .help-name::first-letter { text-transform: uppercase; }
+    .crisis-links { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .moon-picker { display: flex; justify-content: space-between; gap: 4px; margin-top: 12px; }
+    .moon-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 2px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .moon-btn[aria-pressed="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .mood-reply { margin-top: 12px; }
+
+    .moon-dark { fill: var(--moon-dark); }
+    .moon-lit { fill: var(--gold); }
+    .moon-ring { fill: none; stroke: var(--moon-ring); stroke-width: 1; }
+
+    .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .prompt { display: block; margin-top: 22px; }
+    .prompt .q { display: block; font-weight: 600; }
+    .prompt .hint { display: block; font-size: 0.88rem; color: var(--muted); margin: 2px 0 8px; }
+
+    .done-row { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
+    .save-status { font-size: 0.85rem; color: var(--muted); }
+    .closing-line { text-align: center; padding: 16px 6px; }
+
+    /* ===================================================================
+       CHOOSE PROMPTS
+       =================================================================== */
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .check-row:last-child { border-bottom: none; }
+    .check-row input[type="checkbox"] { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+    .check-row label { flex: 1; }
+    .error { color: var(--danger); font-size: 0.9rem; }
+
+    /* ===================================================================
+       HISTORY
+       =================================================================== */
+    .moon-filter { display: flex; justify-content: space-between; gap: 4px; margin: 12px 0; }
+    .month-heading { margin: 22px 0 6px; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    /* Each History entry is a small diary page: date line, then a few lines of writing. */
+    .entry-row {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin: 10px 0;
+    }
+    .entry-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .entry-top .date { font-weight: 600; font-size: 0.98rem; }
+    .entry-top .mood-name { color: var(--muted); font-size: 0.85rem; }
+    .excerpt {
+      display: -webkit-box;
+      -webkit-line-clamp: 6;    /* show up to 6 lines, then "…" */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      white-space: pre-line;
+      margin-top: 10px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    .excerpt.empty { color: var(--muted); }
+    mark { background: var(--gold-soft); color: var(--gold-text); border-radius: 3px; padding: 0 2px; }
+    .no-mood { width: 28px; height: 28px; border-radius: 50%; border: 1.5px dashed var(--moon-ring); flex-shrink: 0; }
+    .tag {
+      font-size: 0.72rem;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--muted);
+      margin-left: 6px;
+      font-weight: 400;
+    }
+    .empty-state { text-align: center; color: var(--muted); padding: 32px 12px; }
+
+    /* ===================================================================
+       ENTRY DETAIL
+       =================================================================== */
+    .answer { margin-top: 20px; }
+    .answer .q { font-size: 0.9rem; color: var(--muted); }
+    .answer .a { white-space: pre-wrap; margin-top: 4px; }
+
+    /* ===================================================================
+       INSIGHTS
+       =================================================================== */
+    .cal-head { display: flex; justify-content: space-between; align-items: center; }
+    .cal-head button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-size: 1.2rem; }
+    .cal-head button:disabled { opacity: 0.3; cursor: default; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; text-align: center; }
+    .cal-weekday { font-size: 0.72rem; color: var(--muted); }
+    .cal-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 2px;
+      min-height: 54px;
+      padding: 4px 0;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    button.cal-day { color: var(--text); background: var(--accent-soft); }
+    .cal-day.empty { opacity: 0.55; }
+    .cal-day.future { opacity: 0.3; }
+    .cal-day.is-today { border-color: var(--accent); opacity: 1; font-weight: 600; color: var(--accent-strong); }
+    .cal-today-label { font-size: 0.6rem; margin-top: 6px; }
+    .cal-intro { margin: 6px 0 0; }
+    .cal-summary { margin: 4px 0 0; }
+    .mood-legend-title { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+    .cal-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--moon-ring); margin-top: 8px; }
+    .mood-counts { display: flex; justify-content: space-between; margin-top: 8px; }
+    .mood-count { display: flex; flex-direction: column; align-items: center; font-size: 0.78rem; color: var(--muted); }
+    .mood-count strong { color: var(--text); font-size: 0.95rem; }
+
+    .chart { width: 100%; height: auto; margin-top: 10px; }
+    .chart .grid { stroke: var(--border); stroke-width: 1; }
+    .chart .axis-label { fill: var(--muted); font-size: 9px; font-family: inherit; }
+    .chart .mood-point { fill: var(--accent); opacity: 0.45; }
+    .chart .avg-line { fill: none; stroke: var(--accent-strong); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .legend { display: flex; gap: 16px; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .legend span::before { content: ""; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .legend .l-dot::before { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.45; }
+    .legend .l-line::before { width: 16px; height: 2px; background: var(--accent-strong); }
+
+    .word-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .word-chip { padding: 4px 12px; border-radius: 999px; background: var(--gold-soft); font-size: 0.92rem; }
+    .word-chip small { color: var(--muted); margin-left: 4px; }
+
+    .big-number { font-size: 1.5rem; font-weight: 600; }
+    .stats { display: flex; gap: 24px; margin: 10px 0; }
+
+    /* ===================================================================
+       LET IT GO (the paper and its animations)
+       =================================================================== */
+    .released { text-align: center; padding: 26px 18px; }
+    .released-title { font-size: 1.15rem; font-weight: 600; }
+
+    .release-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* A soft sky in the colors of the current theme (see --release-scene). */
+      background: var(--release-scene);
+      animation: overlay-in 0.3s ease-out;
+    }
+    @keyframes overlay-in { from { opacity: 0; } }
+
+    .paper {
+      position: relative;
+      isolation: isolate;
+      width: min(86vw, 360px);
+      max-height: 64vh;
+      overflow: hidden;
+      padding: 26px 24px;
+      border-radius: 4px;
+      color: #2E2C28;       /* ink */
+      font-size: 15px;
+      line-height: 1.65;
+      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
+    }
+    .paper-sheet {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      background: #ECE7DB;  /* paper */
+    }
+    .paper-date { margin: 0 0 10px; font-size: 0.8rem; color: #77736A; }
+    .paper-text { white-space: pre-wrap; }
+
+    /* ===================================================================
+       BOTTOM NAVIGATION AND TOAST
+       =================================================================== */
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: center;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 10;
+    }
+    .bottom-nav .inner { display: flex; width: 100%; max-width: 560px; }
+    .nav-btn {
+      flex: 1;
+      height: var(--nav-height);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .nav-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .nav-btn[aria-current="page"] { color: var(--accent-strong); font-weight: 600; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 14px);
+      transform: translateX(-50%) translateY(10px);
+      width: max-content;
+      max-width: calc(100% - 32px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 20;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="view-today" class="view"></section>
+    <section id="view-history" class="view" hidden></section>
+    <section id="view-insights" class="view" hidden></section>
+    <section id="view-prompts" class="view" hidden></section>
+    <section id="view-entry" class="view" hidden></section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Main">
+    <div class="inner">
+      <button class="nav-btn" data-action="tab" data-tab="today">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+        Today
+      </button>
+      <button class="nav-btn" data-action="tab" data-tab="history">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19"/></svg>
+        History
+      </button>
+      <button class="nav-btn" data-action="tab" data-tab="insights">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+        Insights
+      </button>
+    </div>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    /* =====================================================================
+       SETTINGS
+       Everything you are likely to want to change lives here: prompts,
+       mood names, and the messages the app shows. Edit the text inside
+       the quotes and reload the page.
+       ===================================================================== */
+    const SETTINGS = {
+      // Five moods, from new moon (1) to full moon (5).
+      moods: [
+        { level: 1, name: "Heavy" },
+        { level: 2, name: "Low" },
+        { level: 3, name: "Steady" },
+        { level: 4, name: "Good" },
+        { level: 5, name: "Bright" },
+      ],
+
+      // The short reply shown after you pick a mood.
+      moodReplies: {
+        1: "Thank you for being honest with yourself. Writing just a little is enough tonight.",
+        2: "Thank you for being honest with yourself. Writing just a little is enough tonight.",
+        3: "A steady day is a fine day to notice the small things.",
+        4: "Glad today had some light in it.",
+        5: "Glad today had some light in it.",
+      },
+
+      // The built-in prompt library. "on: true" means it is on by default.
+      // Keep each id the same once you have written answers: ids link
+      // answers to prompts (the wording is saved with each answer too).
+      prompts: [
+        // "hints" are small examples shown under the question; a different one appears each day.
+        {
+          id: "happy", text: "What made you happy today?", on: true,
+          hints: [
+            "Even something tiny counts: a song, a snack, a good moment.",
+            "A message that made you smile, sunlight through a window, a good meal.",
+            "Was there a minute today when you forgot to worry?",
+            "Something funny, something cozy, something that went right.",
+          ],
+        },
+        {
+          id: "grateful", text: "What are you grateful for?", on: true,
+          hints: [
+            "A person, a place, a small comfort.",
+            "Someone who helped, even a little: a friend, a TA, a stranger.",
+            "Something you'd miss if it were gone: warm water, your bed, a favorite mug.",
+            "Your body, your health, a quiet hour to yourself.",
+          ],
+        },
+        {
+          id: "proud", text: "What are you proud of today?", on: true,
+          hints: [
+            "Getting through a hard day counts too.",
+            "Starting something you'd been putting off.",
+            "Being patient, asking for help, or saying no.",
+            "Something you handled better than you would have a year ago.",
+          ],
+        },
+        {
+          id: "kind", text: "Who was kind to you, or who were you kind to?", on: false,
+          hints: [
+            "A message, a smile, a held door.",
+            "Someone who listened, shared notes, or saved you a seat.",
+            "A small thing you did for someone, even if they didn't notice.",
+            "Were you kind to yourself today?",
+          ],
+        },
+        {
+          id: "learn", text: "What did you learn today?", on: false,
+          hints: [
+            "About the world, about someone, or about yourself.",
+            "Something from class that finally clicked.",
+            "A fact, a word, a recipe, a shortcut.",
+            "Something a mistake taught you.",
+          ],
+        },
+        {
+          id: "energy", text: "What gave you energy, and what drained it?", on: false,
+          hints: [
+            "No judgment, just noticing.",
+            "People, places, food, sleep, screens: what lifted you, what wore you down?",
+            "When did you feel most awake today? Most tired?",
+            "Something to do more of, something to do less of.",
+          ],
+        },
+        {
+          id: "care", text: "How did you take care of yourself today?", on: false,
+          hints: [
+            "Rest, food, a walk, saying no.",
+            "Drinking water, going to bed on time, stepping outside.",
+            "Talking to someone, or taking time alone.",
+            "Even a five-minute break counts.",
+          ],
+        },
+        {
+          id: "letgo", text: "What are you ready to let go of tonight?", on: false,
+          hints: [
+            "Write it down and leave it here.",
+            "A worry, a mistake, a comment that stung.",
+            "Something you can't control tonight.",
+            "You can pick it back up tomorrow if you really need to.",
+          ],
+        },
+        {
+          id: "differently", text: "What could you do a little differently?", on: true,
+          hints: [
+            "Gently, the way you'd suggest it to a friend.",
+            "One small change, not a whole new plan.",
+            "Starting earlier, resting sooner, asking for help.",
+            "Not a mistake, just something to try next time.",
+          ],
+        },
+        {
+          id: "tomorrow", text: "What would you like for tomorrow?", on: true,
+          hints: [
+            "One small thing is plenty.",
+            "A feeling, a plan, or something to look forward to.",
+            "A good breakfast, a walk, finishing one task.",
+            "Maybe just: an easier day.",
+          ],
+        },
+        {
+          id: "oneword", text: "One word for today", on: false,
+          hints: [
+            "Whatever comes first.",
+            "Calm, busy, heavy, bright, tangled, enough…",
+            "A color or a weather word works too.",
+            "One word, no explaining needed.",
+          ],
+        },
+      ],
+
+      // "Gentler questions" replace your usual prompts for one evening.
+      gentlePrompts: [
+        {
+          id: "g-weighing", text: "What's been weighing on you lately?",
+          hints: [
+            "You don't have to fix it. Just name it.",
+            "School, people, home, health, the future: whatever feels heaviest.",
+            "It's okay if it's a tangle of things.",
+          ],
+        },
+        {
+          id: "g-okay", text: "Did anything, however small, go okay today?",
+          hints: [
+            "A warm drink, a text, getting out of bed.",
+            "A kind word, a good song, a moment of quiet.",
+            "Even \"I made it through\" counts.",
+          ],
+        },
+        {
+          id: "g-help", text: "What's one small thing that might help a little?",
+          hints: [
+            "Small enough to actually do.",
+            "Sleep, food, a shower, a short walk.",
+            "Texting someone, writing a short list, stepping outside for a minute.",
+          ],
+        },
+        {
+          id: "g-lean", text: "Who could you lean on, even a little?",
+          hints: [
+            "A friend, family, someone at school, a counselor.",
+            "Someone who would want to know you're having a hard time.",
+            "A pet, a song, or a favorite place can help you lean too.",
+          ],
+        },
+        {
+          id: "g-friend", text: "What would you say to a friend who felt this way?",
+          hints: [
+            "Then try saying it to yourself.",
+            "Would you tell them it was their fault? Probably not.",
+            "What would you want them to hear tonight?",
+          ],
+        },
+      ],
+
+      // Answers to these prompts can come back as "a happy moment from before".
+      memoryPromptIds: ["happy", "grateful", "proud"],
+
+      // The greeting under today's date. {n} becomes a number.
+      greetings: {
+        firstTime: "Welcome. This is a quiet place to end your day.",
+        writtenToday: "Tonight's page is saved. Come back any time to add more.",
+        yesterday: "Good to see you again. Tonight's page is here when you're ready.",
+        returning: "Welcome back. No catching up needed, just tonight.",
+      },
+
+      // One of these appears when you tap "Done for today".
+      closingLines: [
+        "That's enough for tonight. Rest well.",
+        "Thank you for showing up for yourself.",
+        "Tonight's page is kept safe. Sleep gently.",
+        "Whatever today was, it's done now. Be easy on yourself.",
+        "A few quiet minutes, well spent. Good night.",
+        "You can set the day down now.",
+      ],
+
+      // The soft card that appears when recent moods have been heavy.
+      checkin: {
+        message: "The last little while seems to have felt heavier than usual. That's worth noticing, and it's okay.",
+        supportMessage: "When things have felt hard for a while, talking with someone you trust can help: a friend, family member, or counselor. Many colleges offer free counseling to students. In the US, you can call or text 988 any time to reach someone who will listen.",
+        snoozeDays: 3,
+      },
+
+      // "Let it go": after "Done for today" on an evening with one of these moods,
+      // you can let the page quietly fade away. The entry is always kept.
+      release: {
+        moods: [1, 2], // Heavy and Low. Add 3, 4, 5 to offer it on any evening.
+        offer: "If you'd like, you can let tonight go. Your words stay safe in History.",
+        afterMessage: "You let tonight go.",
+        afterNote: "Those words are kept safe in History if you ever want them. The page below is fresh, if there's anything else you'd like to write.",
+        button: "Let tonight go",
+      },
+
+      rhythmNote: "Missing a day is fine. What counts is coming back.",
+
+      // Things that often help, and the words that show you wrote about them.
+      // The app compares how often each comes up on Good/Bright days versus
+      // other days. Those that come up more on good days become ideas on a
+      // heavy evening. English words match whole words; Chinese matches anywhere.
+      helpers: [
+        {
+          id: "walk", name: "walks and time outside", idea: "a short walk outside, even ten minutes",
+          words: ["walk", "walks", "walked", "walking", "outside", "sun", "sunny", "sunset", "fresh air", "park", "散步", "出门", "走走", "阳光", "公园"],
+        },
+        {
+          id: "move", name: "exercise", idea: "moving a little, like a stretch, a short run, or a few minutes at the gym",
+          words: ["gym", "run", "ran", "running", "exercise", "workout", "yoga", "swim", "swimming", "bike", "运动", "跑步", "健身", "瑜伽", "游泳"],
+        },
+        {
+          id: "friends", name: "time with friends", idea: "a message or a meal with a friend",
+          words: ["friend", "friends", "roommate", "laughed", "hung out", "coffee with", "lunch with", "texted", "朋友", "室友", "聊天", "聊了"],
+        },
+        {
+          id: "family", name: "talking with family", idea: "a call home, even a short one",
+          words: ["mom", "dad", "sister", "brother", "grandma", "grandpa", "family", "parents", "妈妈", "爸爸", "家里", "家人", "奶奶", "外婆"],
+        },
+        {
+          id: "sleep", name: "a good night's sleep", idea: "going to bed a little earlier tonight",
+          words: ["sleep", "slept", "nap", "bed before", "early night", "睡了", "早睡", "睡个好觉", "午睡"],
+        },
+        {
+          id: "music", name: "music", idea: "putting on a song you love",
+          words: ["music", "song", "songs", "album", "playlist", "listened", "音乐", "歌"],
+        },
+        {
+          id: "quiet", name: "quiet time to yourself", idea: "a quiet half hour with tea or a book, with your phone away",
+          words: ["quiet", "book", "reading", "read a", "tea", "shower", "rest", "安静", "看书", "休息", "泡了"],
+        },
+      ],
+
+      // Used before there are enough pages to learn from.
+      generalIdeas: [
+        "stepping outside for a few minutes of daylight",
+        "sending a short message to someone you like",
+        "a warm drink and an early night",
+        "a ten-minute walk, no destination",
+        "putting on a song you love",
+        "writing down one small thing to look forward to",
+      ],
+
+      // Words skipped by "words you mention on good days" (English and Chinese).
+      skipWords: (
+        "the and for with that this was were are but not had have has you your our ours they them their " +
+        "she her his him its it's i'm i've i'd from about just really very today tonight day days got get " +
+        "did didn't don't also some more much what when then than there here which who would could should " +
+        "will can been being into out over after before because made make felt feel feeling little bit lot " +
+        "one two all any even still like how too again things thing something myself went going things " +
+        "happy grateful proud kind learned tomorrow good great nice glad thankful well want wanted " +
+        "maybe though while where why way back time first last other others every each such only " +
+        "without instead put between take real around through until another anything everything someone actually " +
+        "今天 我们 你们 他们 她们 自己 一个 一些 没有 什么 因为 所以 但是 然后 就是 还是 可以 觉得 已经 " +
+        "这个 那个 这样 那样 时候 非常 真的 有点 有些 一点 一下 很多 感觉 开心 感谢 感恩 骄傲 明天 今晚 " +
+        "不是 而且 如果 虽然 一直 还有 的话 比较 起来 知道 现在 东西 我的 一样 这么 那么 完了 终于"
+      ).split(/\s+/),
+    };
+
+    /* =====================================================================
+       STORAGE
+       Everything is kept in one localStorage item, shaped like this:
+       {
+         entries: { "2026-10-27": { mood: 1-5 or null,
+                                    answers: { promptId: { question, text } },
+                                    updatedAt: timestamp, demo?: true } },
+         prefs:   { enabledPromptIds: [...], customPrompts: [{ id, text, hint }] },
+         ui:      small remembered choices, like "hide the memory card today"
+       }
+       ===================================================================== */
+    const STORAGE_KEY = "eveningPages.v1";
+
+    function defaultData() {
+      return {
+        entries: {},
+        prefs: {
+          enabledPromptIds: SETTINGS.prompts.filter((p) => p.on).map((p) => p.id),
+          customPrompts: [],
+        },
+        ui: {},
+      };
+    }
+
+    function loadData() {
+      const fresh = defaultData();
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!saved) return fresh;
+        return {
+          entries: saved.entries || {},
+          prefs: { ...fresh.prefs, ...saved.prefs },
+          ui: saved.ui || {},
+        };
+      } catch (error) {
+        return fresh;
+      }
+    }
+
+    let data = loadData();
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return true;
+      } catch (error) {
+        showToast("Couldn't save in this browser. Private browsing can block saving.");
+        return false;
+      }
+    }
+
+    /* =====================================================================
+       SMALL HELPERS
+       ===================================================================== */
+
+    // Turn user text into safe HTML so typed "<" or "&" can't break the page.
+    function escapeHTML(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Dates are stored as "YYYY-MM-DD" strings in your own time zone.
+    function pad(number) { return String(number).padStart(2, "0"); }
+    function dateKey(date) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
+    function todayKey() { return dateKey(new Date()); }
+    function keyToDate(key) {
+      const [year, month, day] = key.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+    function addDays(key, days) {
+      const date = keyToDate(key);
+      date.setDate(date.getDate() + days);
+      return dateKey(date);
+    }
+    // Whole days from key a to key b (positive if b is later).
+    function daysBetween(a, b) {
+      const [ay, am, ad] = a.split("-").map(Number);
+      const [by, bm, bd] = b.split("-").map(Number);
+      return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86400000);
+    }
+    // The same day of the month, `months` months earlier, or null if it doesn't exist (e.g. Feb 30).
+    function monthsAgoKey(key, months) {
+      const date = keyToDate(key);
+      const day = date.getDate();
+      date.setDate(1);
+      date.setMonth(date.getMonth() - months);
+      date.setDate(day);
+      return date.getDate() === day ? dateKey(date) : null;
+    }
+    function formatDate(key, options) { return keyToDate(key).toLocaleDateString("en-US", options); }
+
+    function moodName(level) { return SETTINGS.moods.find((m) => m.level === level)?.name || ""; }
+    function isLowMood(level) { return level <= 2; }
+    function average(numbers) { return numbers.length ? numbers.reduce((sum, n) => sum + n, 0) / numbers.length : null; }
+    function randomItem(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+    // A random number generator that gives the same sequence for the same seed,
+    // so "a happy moment from before" stays the same all day.
+    function seededRandom(seedText) {
+      let seed = 0;
+      for (const char of seedText) seed = (seed * 31 + char.charCodeAt(0)) | 0;
+      return function () {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 2800);
+    }
+
+    // Grow a text box to fit what's written in it.
+    function autoGrow(textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + 2 + "px";
+    }
+
+    /* =====================================================================
+       MOON DRAWING
+       Draws a moon phase in SVG. Level 1 is a new moon, 5 is a full moon.
+       The lit part is the right half of the circle plus an ellipse edge
+       (the "terminator") whose width depends on how full the moon is.
+       ===================================================================== */
+    function moonSVG(level, size = 36) {
+      const fullness = (level - 1) / 4; // 0, 0.25, 0.5, 0.75, 1
+      let lit = "";
+      if (level === 5) {
+        lit = `<circle cx="12" cy="12" r="10" class="moon-lit"/>`;
+      } else if (level > 1) {
+        const edgeWidth = Math.abs(2 * fullness - 1) * 10;
+        const bulgeLeft = fullness > 0.5 ? 1 : 0; // gibbous bulges left, crescent bulges right
+        lit = `<path class="moon-lit" d="M12 2 A10 10 0 0 1 12 22 A${edgeWidth} 10 0 0 ${bulgeLeft} 12 2 Z"/>`;
+      }
+      return `<svg class="moon" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" class="moon-dark"/>${lit}<circle cx="12" cy="12" r="10" class="moon-ring"/>
+      </svg>`;
+    }
+
+    /* =====================================================================
+       ENTRIES AND PATTERNS
+       ===================================================================== */
+    function hasContent(entry) {
+      return !!entry && (!!entry.mood || allAnswers(entry).length > 0);
+    }
+    // Every non-empty answer for a day, including words you "let go" (they're kept in releasedAnswers).
+    function allAnswers(entry) {
+      return [...Object.values(entry.answers || {}), ...(entry.releasedAnswers || [])].filter((a) => a.text.trim());
+    }
+    function wroteOn(key) { return hasContent(data.entries[key]); }
+    function writtenDays() { return Object.keys(data.entries).filter(wroteOn).sort(); }
+
+    function ensureEntry(day) {
+      if (!data.entries[day]) data.entries[day] = { mood: null, answers: {}, updatedAt: Date.now() };
+      return data.entries[day];
+    }
+
+    // Call after changing an entry: stamps the edit time, or removes the entry if it's now empty.
+    function touchEntry(day) {
+      const entry = data.entries[day];
+      if (!hasContent(entry)) {
+        delete data.entries[day];
+      } else {
+        entry.updatedAt = Date.now();
+        delete entry.demo; // once you edit a page yourself, it's yours
+      }
+    }
+
+    function daysWrittenInLast7() {
+      const today = todayKey();
+      let count = 0;
+      for (let i = 0; i < 7; i++) if (wroteOn(addDays(today, -i))) count++;
+      return count;
+    }
+
+    // Every day with a mood, oldest first: [{ date, mood }]
+    function loggedMoods() {
+      return writtenDays()
+        .filter((day) => data.entries[day].mood)
+        .map((day) => ({ date: day, mood: data.entries[day].mood }));
+    }
+    function moodsBetween(list, fromKey, toKey) { return list.filter((m) => m.date >= fromKey && m.date <= toKey); }
+    function lowShare(list) { return list.filter((m) => isLowMood(m.mood)).length / list.length; }
+
+    // Average mood for the last 14 days and the 14 days before, or null where there are too few.
+    function twoWeekAverages() {
+      const today = todayKey();
+      const all = loggedMoods();
+      const recent = moodsBetween(all, addDays(today, -13), today).map((m) => m.mood);
+      const before = moodsBetween(all, addDays(today, -27), addDays(today, -14)).map((m) => m.mood);
+      return {
+        recent: recent.length >= 3 ? average(recent) : null,
+        before: before.length >= 3 ? average(before) : null,
+      };
+    }
+
+    // Returns "support", "concern", or null. Only the last 30 days count,
+    // so an old hard stretch doesn't keep bringing the card back.
+    function checkinLevel() {
+      const today = todayKey();
+      const recent = moodsBetween(loggedMoods(), addDays(today, -29), today);
+      const last14 = recent.slice(-14);
+      const last7 = recent.slice(-7);
+      const last3 = recent.slice(-3);
+
+      if (last14.length >= 7 && lowShare(last14) >= 0.7) return "support";
+
+      const mostlyLow = last7.length >= 3 && lowShare(last7) >= 0.6;
+      const lowInARow = last3.length === 3 && last3.every((m) => isLowMood(m.mood));
+      const { recent: recentAvg, before: beforeAvg } = twoWeekAverages();
+      const dropping = recentAvg !== null && beforeAvg !== null && recentAvg <= beforeAvg - 0.75 && recentAvg < 3;
+      return mostlyLow || lowInARow || dropping ? "concern" : null;
+    }
+
+    // Past happy / grateful / proud answers, best match first.
+    function memoryCandidates() {
+      const today = todayKey();
+      const answers = [];
+      for (const day of writtenDays()) {
+        if (day >= today) continue; // words you let go aren't in .answers, so they never come back here
+        for (const [id, answer] of Object.entries(data.entries[day].answers || {})) {
+          if (SETTINGS.memoryPromptIds.includes(id) && answer.text.trim()) {
+            answers.push({ date: day, question: answer.question, text: answer.text.trim() });
+          }
+        }
+      }
+      const yearAgo = monthsAgoKey(today, 12);
+      const monthAgo = monthsAgoKey(today, 1);
+      const fromYear = answers.filter((a) => a.date === yearAgo).map((a) => ({ ...a, label: "One year ago today" }));
+      const fromMonth = answers.filter((a) => a.date === monthAgo).map((a) => ({ ...a, label: "One month ago today" }));
+      const others = answers
+        .filter((a) => a.date !== yearAgo && a.date !== monthAgo && daysBetween(a.date, today) >= 3)
+        .map((a) => ({ ...a, label: "From " + formatDate(a.date, { month: "long", day: "numeric", year: "numeric" }) }));
+
+      // Shuffle the others the same way all day long.
+      const random = seededRandom(today);
+      for (let i = others.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [others[i], others[j]] = [others[j], others[i]];
+      }
+      return [...fromYear, ...fromMonth, ...others];
+    }
+
+    /* =====================================================================
+       WHAT SEEMS TO HELP
+       Looks for things (walks, friends, sleep...) that you write about more
+       on Good/Bright days than on other days. Everything stays on the phone.
+       ===================================================================== */
+    // One test per helper: English words as whole words, Chinese anywhere in the text.
+    const HELPER_MATCHERS = SETTINGS.helpers.map((helper) => {
+      const chinese = helper.words.filter((w) => /[㐀-鿿]/.test(w));
+      const english = helper.words.filter((w) => !chinese.includes(w));
+      const pattern = new RegExp(`\\b(${english.join("|")})\\b`, "i");
+      return (text) => pattern.test(text) || chinese.some((w) => text.includes(w));
+    });
+
+    // Returns [{ helper, goodDays, goodTotal, lastDate }], strongest first,
+    // or null when there are too few moods to say anything yet.
+    function helpfulThings() {
+      const days = writtenDays().filter((day) => data.entries[day].mood);
+      if (days.length < 7) return null;
+      const goodTotal = days.filter((day) => data.entries[day].mood >= 4).length;
+      const otherTotal = days.length - goodTotal;
+      if (goodTotal < 2 || otherTotal < 2) return [];
+
+      const results = [];
+      SETTINGS.helpers.forEach((helper, i) => {
+        let goodDays = 0, otherDays = 0, lastDate = null;
+        for (const day of days) {
+          if (!HELPER_MATCHERS[i](allAnswers(data.entries[day]).map((a) => a.text).join(" "))) continue;
+          if (data.entries[day].mood >= 4) goodDays++;
+          else otherDays++;
+          lastDate = day; // days are oldest first, so this ends on the latest
+        }
+        const lift = goodDays / goodTotal - otherDays / otherTotal;
+        if (goodDays >= 2 && lift >= 0.1) results.push({ helper, goodDays, goodTotal, lastDate, lift });
+      });
+      return results.sort((a, b) => b.lift - a.lift);
+    }
+
+    // Ideas for a heavy evening, from your own pages when possible.
+    // Things you haven't mentioned in a few days come first.
+    function ideasForToday() {
+      const today = todayKey();
+      const helpful = helpfulThings() || [];
+      const personal = helpful
+        .map((h) => ({ ...h, daysSince: daysBetween(h.lastDate, today) }))
+        .sort((a, b) => (b.daysSince >= 3) - (a.daysSince >= 3))
+        .map((h) => {
+          const since = h.daysSince >= 2 ? ` The last time you mentioned it was ${h.daysSince} days ago.` : "";
+          return {
+            text: `On your brighter days, you often write about ${h.helper.name}.${since} Something to try tomorrow: ${h.helper.idea}.`,
+            personal: true,
+          };
+        });
+      // General ideas come after your own, so "Another idea" always has somewhere to go.
+      const general = SETTINGS.generalIdeas.map((idea) => ({ text: `A small idea for tomorrow: ${idea}.`, personal: false }));
+      return [...personal, ...general];
+    }
+
+    /* =====================================================================
+       NAVIGATION
+       Three main tabs, plus two pages that open on top of them.
+       ===================================================================== */
+    const TABS = ["today", "history", "insights"];
+    let currentView = "today";
+    let currentTab = "today";
+
+    function showView(name) {
+      flushSave();
+      currentView = name;
+      if (TABS.includes(name)) currentTab = name;
+      document.querySelectorAll(".view").forEach((view) => { view.hidden = view.id !== "view-" + name; });
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        if (button.dataset.tab === currentTab) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      RENDERERS[name]();
+      window.scrollTo(0, 0);
+    }
+
+    function view(name) { return document.getElementById("view-" + name); }
+
+    // Re-draw a screen without jumping back to the top.
+    function rerenderKeepingScroll(render) {
+      const scrollY = window.scrollY;
+      render();
+      window.scrollTo(0, scrollY);
+    }
+
+    /* =====================================================================
+       APPEARANCE: light, dark, or match the phone's setting
+       data.ui.theme is "light" or "dark"; when it's missing, follow the phone.
+       ===================================================================== */
+    const APPEARANCE_CHOICES = [
+      { id: "light", label: "Light" },
+      { id: "dark", label: "Dark" },
+      { id: "auto", label: "Match my phone" },
+    ];
+    const phonePrefersLight = window.matchMedia("(prefers-color-scheme: light)");
+
+    function themeChoice() {
+      return data.ui.theme === "light" || data.ui.theme === "dark" ? data.ui.theme : "auto";
+    }
+
+    function applyTheme() {
+      const choice = themeChoice();
+      const theme = choice === "auto" ? (phonePrefersLight.matches ? "light" : "dark") : choice;
+      document.documentElement.dataset.theme = theme;
+      // Color the phone's status bar to match.
+      document.querySelector('meta[name="theme-color"]').content = theme === "light" ? "#7C9A97" : "#9DB4C8";
+    }
+
+    function setTheme(choice) {
+      if (choice === "auto") delete data.ui.theme;
+      else data.ui.theme = choice;
+      saveData();
+      applyTheme();
+      appearanceOpen = false;
+      rerenderKeepingScroll(renderToday);
+    }
+
+    // The sun-and-moon button in Today's top corner.
+    function appearanceButtonHTML() {
+      return `<button class="corner-btn" data-action="appearance-toggle"
+          aria-label="Appearance: light or dark" aria-expanded="${appearanceOpen}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>
+        </svg>
+      </button>`;
+    }
+
+    function appearanceCardHTML() {
+      if (!appearanceOpen) return "";
+      const current = themeChoice();
+      const buttons = APPEARANCE_CHOICES.map((choice) =>
+        `<button class="btn" data-action="set-theme" data-theme="${choice.id}"
+          aria-pressed="${choice.id === current}">${choice.label}</button>`).join("");
+      return `<section class="card" id="appearance-card">
+        <h2>Appearance</h2>
+        <div class="appearance-choices">${buttons}</div>
+      </section>`;
+    }
+
+    /* =====================================================================
+       SCREEN 1: TODAY
+       ===================================================================== */
+    let appearanceOpen = false; // whether the Appearance choices are showing
+    let renderedDay = null;   // which date the Today screen is showing
+    let saveTimer = null;     // pending autosave
+    let closingLine = "";     // shown after "Done for today"
+
+    function greetingText() {
+      const g = SETTINGS.greetings;
+      if (!writtenDays().length) return g.firstTime;
+      if (wroteOn(todayKey())) return g.writtenToday;
+      return wroteOn(addDays(todayKey(), -1)) ? g.yesterday : g.returning;
+    }
+
+    function weekDotsHTML() {
+      const today = todayKey();
+      let dots = "";
+      for (let i = 6; i >= 0; i--) {
+        const day = addDays(today, -i);
+        const style = wroteOn(day) ? "filled" : i === 0 ? "today" : "";
+        dots += `<span class="day-dot"><span class="dot ${style}"></span>
+          <span class="dot-label">${formatDate(day, { weekday: "narrow" })}</span></span>`;
+      }
+      return `<div class="week-dots" role="img" aria-label="Written on ${daysWrittenInLast7()} of the last 7 days">${dots}</div>`;
+    }
+
+    function checkinCardHTML(today, gentle) {
+      const level = checkinLevel();
+      const snoozedUntil = data.ui.checkinSnoozeUntil;
+      if (!level || gentle || (snoozedUntil && today < snoozedUntil)) return "";
+      const support = level === "support"
+        ? `<p>${escapeHTML(SETTINGS.checkin.supportMessage)}</p>
+           <div class="crisis-links"><a class="btn" href="tel:988">Call 988</a><a class="btn" href="sms:988">Text 988</a></div>`
+        : "";
+      return `<section class="card checkin">
+        <p>${escapeHTML(SETTINGS.checkin.message)}</p>
+        ${support}
+        <div class="row">
+          <button class="btn primary" data-action="gentle-on">Try gentler questions</button>
+          <button class="btn" data-action="checkin-snooze">Not now</button>
+        </div>
+      </section>`;
+    }
+
+    function memoryCardHTML(today) {
+      if (data.ui.memoryHiddenOn === today) return "";
+      const candidates = memoryCandidates();
+      if (!candidates.length) return "";
+      const index = data.ui.memory?.date === today ? data.ui.memory.index : 0;
+      const memory = candidates[index % candidates.length];
+      return `<section class="card memory">
+        <p class="label">A happy moment from before · ${escapeHTML(memory.label)}</p>
+        <p class="question">${escapeHTML(memory.question)}</p>
+        <blockquote>${escapeHTML(memory.text)}</blockquote>
+        <div class="row">
+          ${candidates.length > 1 ? `<button class="btn" data-action="memory-next">Another one</button>` : ""}
+          <button class="btn" data-action="memory-hide">Hide for today</button>
+        </div>
+      </section>`;
+    }
+
+    // A gentle idea, shown on a Heavy/Low evening or when recent moods have been low.
+    function ideaCardHTML(today, mood) {
+      if (data.ui.ideaHiddenOn === today) return "";
+      if (!(mood && isLowMood(mood)) && !checkinLevel()) return "";
+      const ideas = ideasForToday();
+      const start = ideas[0].personal ? 0 : Math.floor(seededRandom(today + "idea")() * ideas.length);
+      const index = data.ui.idea?.date === today ? data.ui.idea.index : 0;
+      const idea = ideas[(start + index) % ideas.length];
+      const note = ideas[0].personal ? "" : `<p class="muted small">As you write more, ideas here will come from your own pages.</p>`;
+      return `<section class="card idea" id="idea-card">
+        <p class="label">A small idea</p>
+        <p>${escapeHTML(idea.text)}</p>
+        ${note}
+        <div class="row">
+          ${ideas.length > 1 ? `<button class="btn" data-action="idea-next">Another idea</button>` : ""}
+          <button class="btn" data-action="idea-hide">Not today</button>
+        </div>
+      </section>`;
+    }
+
+    function moodSectionHTML(mood, gentle) {
+      const buttons = SETTINGS.moods.map((m) => `
+        <button class="moon-btn" data-action="pick-mood" data-mood="${m.level}" aria-pressed="${m.level === mood}">
+          ${moonSVG(m.level, 40)}<span>${escapeHTML(m.name)}</span>
+        </button>`).join("");
+      let reply = "";
+      if (mood) {
+        reply = `<p class="mood-reply">${escapeHTML(SETTINGS.moodReplies[mood] || "")}</p>`;
+        if (isLowMood(mood) && !gentle) {
+          reply += `<button class="btn" data-action="gentle-on">Try gentler questions tonight</button>`;
+        }
+      }
+      return `<section class="card">
+        <h2>How did today feel?</h2>
+        <div class="moon-picker" role="group" aria-label="Mood">${buttons}</div>
+        ${reply}
+      </section>`;
+    }
+
+    function allPrompts() { return [...SETTINGS.prompts, ...data.prefs.customPrompts]; }
+
+    // Built-in prompts have several example hints and show a different one each day
+    // (the same one all day long). Your own prompts use their single "hint", if any.
+    function hintFor(prompt, day) {
+      if (!prompt.hints) return prompt.hint || "";
+      if (!day) return prompt.hints[0];
+      return prompt.hints[Math.floor(seededRandom(day + prompt.id)() * prompt.hints.length)];
+    }
+    function enabledPrompts() {
+      const on = new Set(data.prefs.enabledPromptIds);
+      return allPrompts().filter((p) => on.has(p.id));
+    }
+
+    // Tonight's prompts, plus anything already answered today that isn't
+    // in that list (for example after switching to gentler questions).
+    function promptsForToday(entry, gentle) {
+      const prompts = gentle ? [...SETTINGS.gentlePrompts] : enabledPrompts();
+      const shown = new Set(prompts.map((p) => p.id));
+      for (const [id, answer] of Object.entries(entry?.answers || {})) {
+        if (!shown.has(id) && answer.text.trim()) prompts.push({ id, text: answer.question, hint: "" });
+      }
+      return prompts;
+    }
+
+    function promptsSectionHTML(entry, gentle) {
+      const prompts = promptsForToday(entry, gentle);
+      const head = gentle
+        ? `<h2>Gentler questions for tonight</h2>
+           <button class="link-btn" data-action="gentle-off">Back to my usual prompts</button>`
+        : `<h2>Tonight's questions</h2>
+           <button class="link-btn" data-action="open-prompts">Choose prompts</button>`;
+      const fields = prompts.map((p) => {
+        const value = entry?.answers?.[p.id]?.text || "";
+        return `<label class="prompt">
+          <span class="q">${escapeHTML(p.text)}</span>
+          ${hintFor(p, renderedDay) ? `<span class="hint">${escapeHTML(hintFor(p, renderedDay))}</span>` : ""}
+          <textarea rows="2" data-prompt-id="${escapeHTML(p.id)}" data-question="${escapeHTML(p.text)}">${escapeHTML(value)}</textarea>
+        </label>`;
+      }).join("");
+      const empty = prompts.length ? "" : `<p class="muted">No prompts are on right now. Picking a mood is plenty, or turn some prompts on.</p>`;
+      const gentleOffer = gentle ? "" : `<button class="link-btn" data-action="gentle-on">Switch to gentler questions tonight</button>`;
+      return `<section>
+        <div class="section-head">${head}</div>
+        <p class="muted small">Answer as many or as few as you like.</p>
+        ${fields}${empty}
+        ${gentleOffer}
+      </section>`;
+    }
+
+    function renderToday() {
+      const today = todayKey();
+      if (renderedDay !== today) closingLine = ""; // a new evening starts fresh
+      renderedDay = today;
+      const entry = data.entries[today];
+      const gentle = data.ui.gentleDate === today;
+
+      view("today").innerHTML = `
+        <header class="page-head with-corner">
+          <p class="eyebrow">Evening Pages</p>
+          <h1>${formatDate(today, { weekday: "long", month: "long", day: "numeric" })}</h1>
+          <p class="greeting" id="greeting">${escapeHTML(greetingText())}</p>
+          <div id="week-dots">${weekDotsHTML()}</div>
+          ${appearanceButtonHTML()}
+        </header>
+        ${appearanceCardHTML()}
+        ${checkinCardHTML(today, gentle)}
+        ${memoryCardHTML(today)}
+        ${moodSectionHTML(entry?.mood || null, gentle)}
+        ${ideaCardHTML(today, entry?.mood || null)}
+        ${entry?.released ? releasedNoteHTML() : ""}
+        ${writingAreaHTML(entry, gentle)}
+      `;
+      view("today").querySelectorAll("textarea").forEach(autoGrow);
+    }
+
+    function writingAreaHTML(entry, gentle) {
+      return `
+        ${promptsSectionHTML(entry, gentle)}
+        <div class="done-row">
+          <button class="btn primary" data-action="done">Done for today</button>
+          <span class="save-status" id="save-status" aria-live="polite"></span>
+        </div>
+        <p class="closing-line" id="closing-line">${escapeHTML(closingLine)}</p>
+        ${closingLine && canRelease(entry) ? releaseOfferHTML() : ""}
+      `;
+    }
+
+    // After "Done for today" on a heavy evening: choose a way to let the page go.
+    function releaseOfferHTML() {
+      return `<section class="card release-offer" id="release-offer">
+        <p>${escapeHTML(SETTINGS.release.offer)}</p>
+        <div class="row"><button class="btn" data-action="release">${escapeHTML(SETTINGS.release.button)}</button></div>
+      </section>`;
+    }
+
+    // Shown above the prompts once tonight's page has been let go.
+    function releasedNoteHTML() {
+      return `<section class="card released" id="released-card">
+        <p class="released-title">${escapeHTML(SETTINGS.release.afterMessage)}</p>
+        <p class="muted">${escapeHTML(SETTINGS.release.afterNote)}</p>
+      </section>`;
+    }
+
+    // Update the greeting and dots after typing, without redrawing the text boxes.
+    function refreshRhythm() {
+      const greeting = document.getElementById("greeting");
+      const dots = document.getElementById("week-dots");
+      if (greeting) greeting.textContent = greetingText();
+      if (dots) dots.innerHTML = weekDotsHTML();
+    }
+
+    function setSaveStatus(text) {
+      const status = document.getElementById("save-status");
+      if (status) status.textContent = text;
+    }
+
+    // Typing updates the data right away; writing to storage waits until
+    // you pause for a moment (that's the "debounce").
+    function onAnswerInput(textarea) {
+      autoGrow(textarea);
+      const day = renderedDay;
+      const id = textarea.dataset.promptId;
+      const entry = ensureEntry(day);
+      if (textarea.value.trim()) entry.answers[id] = { question: textarea.dataset.question, text: textarea.value };
+      else delete entry.answers[id];
+      touchEntry(day);
+      setSaveStatus("Saving…");
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(flushSave, 700);
+    }
+
+    // Write any pending typing to storage now.
+    function flushSave() {
+      if (!saveTimer) return;
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      if (saveData()) setSaveStatus("Saved");
+      refreshRhythm();
+    }
+
+    function pickMood(level) {
+      const today = todayKey();
+      ensureEntry(today).mood = level;
+      touchEntry(today);
+      saveData();
+      rerenderKeepingScroll(renderToday);
+    }
+
+    function setGentle(on) {
+      data.ui.gentleDate = on ? todayKey() : null;
+      saveData();
+      renderToday();
+      view("today").querySelector(".section-head")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function finishToday() {
+      flushSave();
+      closingLine = randomItem(SETTINGS.closingLines);
+      rerenderKeepingScroll(renderToday);
+      const target = document.getElementById("release-offer") || document.getElementById("closing-line");
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // If the app was left open past midnight, start a fresh page on return.
+    function checkForNewDay() {
+      if (renderedDay && renderedDay !== todayKey()) {
+        flushSave();
+        if (currentView === "today") renderToday();
+        else renderedDay = null;
+      }
+    }
+
+    /* =====================================================================
+       LET IT GO
+       After a heavy evening you can let tonight's page go: it softens and
+       quietly fades away. It's only a picture. The entry itself is always
+       kept, so you can still find it in History.
+       ===================================================================== */
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Run one Web Animation and wait for it to finish. "forwards" keeps the end state.
+    function play(element, keyframes, options) {
+      return element.animate(keyframes, { fill: "forwards", ...options }).finished;
+    }
+
+    function canRelease(entry) {
+      return !!entry?.mood && SETTINGS.release.moods.includes(entry.mood);
+    }
+
+    // Build the sheet of paper with tonight's words on it.
+    function makePaper(day, entry) {
+      const texts = Object.values(entry.answers || {}).map((a) => a.text.trim()).filter(Boolean);
+      let text = texts.length ? texts.join("\n\n") : moodName(entry.mood);
+      if (text.length > 360) text = text.slice(0, 360) + "…";
+      const paper = document.createElement("div");
+      paper.className = "paper";
+      paper.innerHTML = `<div class="paper-sheet"></div>
+        <p class="paper-date">${formatDate(day, { weekday: "long", month: "long", day: "numeric" })}</p>
+        <div class="paper-text">${escapeHTML(text)}</div>`;
+      return paper;
+    }
+
+    // The paper rises into view and rests a moment before anything happens.
+    async function showPaper(paper) {
+      await play(paper, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "none" }], { duration: 450, easing: "ease-out" });
+      await wait(700);
+    }
+
+    // The page quietly fades and lifts away, softening as it goes.
+    async function fadeAway(paper) {
+      await showPaper(paper);
+      await play(paper, [
+        { opacity: 1, transform: "translateY(0px)", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(-16px)", filter: "blur(3px)" },
+      ], { duration: 1800, easing: "ease-in-out" });
+    }
+
+    async function releaseTonight() {
+      flushSave();
+      const today = todayKey();
+      const entry = data.entries[today];
+      if (!entry) return;
+
+      const overlay = document.createElement("div");
+      overlay.className = "release-overlay";
+      const paper = makePaper(today, entry);
+      overlay.appendChild(paper);
+      document.body.appendChild(overlay);
+
+      try {
+        if (typeof paper.animate === "function") await fadeAway(paper);
+      } catch (error) {
+        // If an animation can't run in this browser, just carry on.
+      }
+
+      // The words move off tonight's page into releasedAnswers, so the boxes
+      // start fresh but nothing is lost: History still shows and searches them.
+      entry.releasedAnswers = [...(entry.releasedAnswers || []), ...Object.values(entry.answers).filter((a) => a.text.trim())];
+      entry.answers = {};
+      entry.released = true;
+      touchEntry(today);
+      saveData();
+      closingLine = "";
+      renderToday();
+      document.getElementById("released-card")?.scrollIntoView({ block: "center" });
+      overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: "forwards" }).finished.then(() => overlay.remove());
+    }
+
+    /* =====================================================================
+       CHOOSE PROMPTS
+       ===================================================================== */
+    let promptError = "";
+
+    function renderPrompts() {
+      const on = new Set(data.prefs.enabledPromptIds);
+      const row = (p, removable) => `
+        <div class="check-row">
+          <input type="checkbox" id="p-${escapeHTML(p.id)}" data-toggle-prompt="${escapeHTML(p.id)}" ${on.has(p.id) ? "checked" : ""}>
+          <label for="p-${escapeHTML(p.id)}">${escapeHTML(p.text)}
+            ${hintFor(p) ? `<span class="muted small" style="display:block">${escapeHTML(hintFor(p))}</span>` : ""}
+          </label>
+          ${removable ? `<button class="link-btn" data-action="remove-prompt" data-id="${escapeHTML(p.id)}" aria-label="Remove ${escapeHTML(p.text)}">Remove</button>` : ""}
+        </div>`;
+      const custom = data.prefs.customPrompts;
+
+      view("prompts").innerHTML = `
+        <header class="page-head">
+          <button class="link-btn" data-action="back">‹ Back to Today</button>
+          <h1>Choose prompts</h1>
+          <p class="muted">Turn on the questions you'd like to see each evening.</p>
+        </header>
+        <section class="card">${SETTINGS.prompts.map((p) => row(p, false)).join("")}</section>
+        <section class="card">
+          <h2>Your own prompts</h2>
+          ${custom.length ? custom.map((p) => row(p, true)).join("") : `<p class="muted small">None yet. Add a question that matters to you.</p>`}
+          <form id="add-prompt-form" class="stack">
+            <label for="new-prompt" class="visually-hidden">New prompt</label>
+            <input type="text" id="new-prompt" maxlength="200" placeholder="e.g. What made me laugh today?">
+            ${promptError ? `<p class="error">${escapeHTML(promptError)}</p>` : ""}
+            <button class="btn primary" type="submit">Add prompt</button>
+          </form>
+        </section>
+        <p class="muted small">Turning off or removing a prompt never removes what you've already written.</p>
+      `;
+    }
+
+    function togglePrompt(id, checked) {
+      const on = new Set(data.prefs.enabledPromptIds);
+      if (checked) on.add(id);
+      else on.delete(id);
+      data.prefs.enabledPromptIds = [...on];
+      saveData();
+      showToast(checked ? "Prompt turned on" : "Prompt turned off");
+    }
+
+    function addCustomPrompt(text) {
+      const question = text.trim();
+      if (!question) {
+        promptError = "Write a question first.";
+        renderPrompts();
+        return;
+      }
+      promptError = "";
+      const id = "custom-" + Date.now().toString(36);
+      data.prefs.customPrompts.push({ id, text: question, hint: "" });
+      data.prefs.enabledPromptIds.push(id);
+      saveData();
+      renderPrompts();
+      showToast("Prompt added");
+    }
+
+    function removeCustomPrompt(id) {
+      data.prefs.customPrompts = data.prefs.customPrompts.filter((p) => p.id !== id);
+      data.prefs.enabledPromptIds = data.prefs.enabledPromptIds.filter((pid) => pid !== id);
+      saveData();
+      renderPrompts();
+      showToast("Prompt removed. Past answers are kept.");
+    }
+
+    /* =====================================================================
+       SCREEN 2: HISTORY
+       ===================================================================== */
+    let historyQuery = "";
+    let historyMood = null;
+
+    function renderHistory() {
+      const filters = SETTINGS.moods.map((m) => `
+        <button class="moon-btn" data-action="filter-mood" data-mood="${m.level}" aria-pressed="${historyMood === m.level}">
+          ${moonSVG(m.level, 28)}<span>${escapeHTML(m.name)}</span>
+        </button>`).join("");
+      view("history").innerHTML = `
+        <header class="page-head"><h1>History</h1></header>
+        <label for="history-search" class="visually-hidden">Search your pages</label>
+        <input type="search" id="history-search" placeholder="Search your pages" value="${escapeHTML(historyQuery)}">
+        <div class="moon-filter" role="group" aria-label="Show only days with this mood">${filters}</div>
+        <div id="history-list"></div>
+      `;
+      renderHistoryList();
+    }
+
+    // A few lines of the day's writing, like flipping through a diary.
+    // When searching, answers that match come first and matches are highlighted.
+    function diaryExcerptHTML(entry, query) {
+      let texts = allAnswers(entry).map((a) => a.text.trim());
+      if (!texts.length) return `<span class="excerpt empty">A mood, no words.</span>`;
+      if (query) texts = [...texts.filter((t) => t.toLowerCase().includes(query)), ...texts.filter((t) => !t.toLowerCase().includes(query))];
+      let html = escapeHTML(texts.join("\n").slice(0, 700));
+      if (query) {
+        const pattern = escapeHTML(query).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        html = html.replace(new RegExp(pattern, "gi"), (match) => `<mark>${match}</mark>`);
+      }
+      return `<span class="excerpt">${html}</span>`;
+    }
+
+    function renderHistoryList() {
+      const query = historyQuery.trim().toLowerCase();
+      const days = writtenDays().reverse().filter((day) => {
+        const entry = data.entries[day];
+        if (historyMood && entry.mood !== historyMood) return false;
+        if (query && !allAnswers(entry).some((a) => a.text.toLowerCase().includes(query))) return false;
+        return true;
+      });
+
+      const list = document.getElementById("history-list");
+      if (!writtenDays().length) {
+        list.innerHTML = `<p class="empty-state">No pages yet. Your first one is waiting on Today.</p>`;
+        return;
+      }
+      if (!days.length) {
+        list.innerHTML = `<p class="empty-state">No pages match that.</p>`;
+        return;
+      }
+
+      let html = "";
+      let lastMonth = "";
+      for (const day of days) {
+        const month = formatDate(day, { month: "long", year: "numeric" });
+        if (month !== lastMonth) {
+          html += `<h2 class="month-heading">${month}</h2>`;
+          lastMonth = month;
+        }
+        const entry = data.entries[day];
+        html += `<button class="entry-row" data-action="open-entry" data-date="${day}">
+          <span class="entry-top">
+            ${entry.mood ? moonSVG(entry.mood, 28) : `<span class="no-mood" aria-hidden="true"></span>`}
+            <span class="date">${formatDate(day, { weekday: "long", month: "short", day: "numeric" })}</span>
+            ${entry.mood ? `<span class="mood-name">${escapeHTML(moodName(entry.mood))}</span>` : ""}
+            ${entry.released ? `<span class="tag">let go</span>` : ""}
+            ${entry.demo ? `<span class="tag">demo</span>` : ""}
+          </span>
+          ${diaryExcerptHTML(entry, query)}
+        </button>`;
+      }
+      list.innerHTML = html;
+    }
+
+    /* =====================================================================
+       READING ONE ENTRY
+       ===================================================================== */
+    let entryDate = null;
+    let deleteArmed = false;
+
+    function openEntry(day) {
+      entryDate = day;
+      deleteArmed = false;
+      showView("entry");
+    }
+
+    function renderEntry() {
+      const entry = data.entries[entryDate];
+      const back = `<button class="link-btn" data-action="back">‹ Back to ${currentTab === "insights" ? "Insights" : "History"}</button>`;
+      if (!entry) {
+        view("entry").innerHTML = `<header class="page-head">${back}</header><p class="empty-state">This page isn't here anymore.</p>`;
+        return;
+      }
+      const answers = Object.values(entry.answers || {}).filter((a) => a.text.trim());
+      const released = (entry.releasedAnswers || []).filter((a) => a.text.trim());
+      const answerHTML = (a) => `<div class="answer"><p class="q">${escapeHTML(a.question)}</p><p class="a">${escapeHTML(a.text)}</p></div>`;
+      view("entry").innerHTML = `
+        <header class="page-head">
+          ${back}
+          <h1>${formatDate(entryDate, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</h1>
+          ${entry.demo ? `<p class="muted small">Demo entry</p>` : ""}
+          ${entry.released ? `<p class="muted small">You let this page go that night. It's still kept here for you.</p>` : ""}
+        </header>
+        <section class="card">
+          ${entry.mood
+            ? `<div class="row" style="align-items:center;margin-top:0">${moonSVG(entry.mood, 40)}<strong>${escapeHTML(moodName(entry.mood))}</strong></div>`
+            : `<p class="muted">No mood picked.</p>`}
+          ${answers.map(answerHTML).join("")}
+          ${answers.length || released.length ? "" : `<p class="muted">No words this evening, just the moon.</p>`}
+        </section>
+        ${released.length ? `<section class="card">
+          <h2>Let go that night</h2>
+          ${released.map(answerHTML).join("")}
+        </section>` : ""}
+        <div class="row">
+          ${entryDate === todayKey() ? `<button class="btn primary" data-action="tab" data-tab="today">Keep writing on Today</button>` : ""}
+          <button class="btn danger" id="delete-button" data-action="delete-entry">Delete this page</button>
+        </div>
+      `;
+    }
+
+    // First tap arms the button, second tap deletes. It disarms after a few seconds.
+    function deleteEntry(button) {
+      if (!deleteArmed) {
+        deleteArmed = true;
+        button.textContent = "Tap again to delete for good";
+        button.classList.add("armed");
+        clearTimeout(deleteEntry.timer);
+        deleteEntry.timer = setTimeout(() => {
+          deleteArmed = false;
+          button.textContent = "Delete this page";
+          button.classList.remove("armed");
+        }, 4000);
+        return;
+      }
+      clearTimeout(deleteEntry.timer);
+      delete data.entries[entryDate];
+      saveData();
+      showToast("Page deleted");
+      showView(currentTab);
+    }
+
+    /* =====================================================================
+       SCREEN 3: INSIGHTS
+       ===================================================================== */
+    let calendarMonth = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+    function calendarHTML() {
+      const { year, month } = calendarMonth;
+      const now = new Date();
+      const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+      const today = todayKey();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startWeekday = new Date(year, month, 1).getDay();
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let daysWritten = 0;
+
+      let cells = ["S", "M", "T", "W", "T", "F", "S"].map((d) => `<span class="cal-weekday">${d}</span>`).join("");
+      for (let i = 0; i < startWeekday; i++) cells += `<span></span>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = dateKey(new Date(year, month, d));
+        const entry = wroteOn(day) ? data.entries[day] : null;
+        const todayClass = day === today ? " is-today" : "";
+        if (entry) {
+          daysWritten++;
+          if (entry.mood) counts[entry.mood]++;
+          const label = "Read " + formatDate(day, { month: "long", day: "numeric" }) + (entry.mood ? ", " + moodName(entry.mood) : "");
+          cells += `<button class="cal-day${todayClass}" data-action="open-entry" data-date="${day}" aria-label="${label}">
+            ${d}${entry.mood ? moonSVG(entry.mood, 24) : `<span class="cal-dot"></span>`}
+          </button>`;
+        } else {
+          // Days you didn't write are faded; days still to come, even more.
+          const state = day > today ? "future" : "empty";
+          const todayLabel = day === today ? `<span class="cal-today-label">today</span>` : "";
+          cells += `<span class="cal-day ${state}${todayClass}">${d}${todayLabel}</span>`;
+        }
+      }
+
+      const monthName = new Date(year, month, 1).toLocaleDateString("en-US", { month: "long" });
+      const countRow = SETTINGS.moods.map((m) => `
+        <span class="mood-count">${moonSVG(m.level, 22)}<strong>${counts[m.level]}</strong>${escapeHTML(m.name)}</span>`).join("");
+
+      return `
+        <div class="cal-head">
+          <button data-action="cal-prev" aria-label="Previous month">‹</button>
+          <h2>${new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</h2>
+          <button data-action="cal-next" aria-label="Next month" ${isCurrentMonth ? "disabled" : ""}>›</button>
+        </div>
+        <p class="muted small cal-intro">Each moon is a day you wrote, showing how it felt. Tap a day to read that page.</p>
+        <p class="cal-summary">${monthSummary(daysWritten, counts, monthName, isCurrentMonth)}</p>
+        <div class="cal-grid">${cells}</div>
+        <p class="mood-legend-title">Moods in ${monthName}</p>
+        <div class="mood-counts">${countRow}</div>
+      `;
+    }
+
+    // One plain sentence about the month, e.g. "So far this month, you wrote on 12 days. Most felt Good."
+    function monthSummary(daysWritten, counts, monthName, isCurrentMonth) {
+      if (!daysWritten) return isCurrentMonth ? "No pages yet this month." : `No pages in ${monthName}.`;
+      const days = daysWritten === 1 ? "1 day" : `${daysWritten} days`;
+      const start = isCurrentMonth ? `So far this month, you wrote on ${days}.` : `In ${monthName}, you wrote on ${days}.`;
+      const most = Math.max(...Object.values(counts));
+      const top = SETTINGS.moods.filter((m) => counts[m.level] === most);
+      if (!most) return start;
+      if (top.length > 1) return `${start} Your moods were a mix.`;
+      return `${start} Most felt ${top[0].name}.`;
+    }
+
+    function changeMonth(step) {
+      const date = new Date(calendarMonth.year, calendarMonth.month + step, 1);
+      calendarMonth = { year: date.getFullYear(), month: date.getMonth() };
+      document.getElementById("calendar-card").innerHTML = calendarHTML();
+    }
+
+    // Last 30 days: a dot per day's mood and a line for the 7-day average.
+    function moodChartSVG() {
+      const today = todayKey();
+      const all = loggedMoods();
+      const width = 320, height = 160, left = 46, right = 8, top = 10, bottom = 22;
+      const x = (i) => left + (i * (width - left - right)) / 29;
+      const y = (mood) => top + ((5 - mood) * (height - top - bottom)) / 4;
+
+      let grid = "";
+      for (const level of [1, 3, 5]) {
+        grid += `<line class="grid" x1="${left}" x2="${width - right}" y1="${y(level)}" y2="${y(level)}"/>
+          <text class="axis-label" x="${left - 6}" y="${y(level) + 3}" text-anchor="end">${escapeHTML(moodName(level))}</text>`;
+      }
+
+      let dots = "";
+      let path = "";
+      let penDown = false;
+      for (let i = 0; i < 30; i++) {
+        const day = addDays(today, i - 29);
+        const mood = data.entries[day]?.mood;
+        if (mood) dots += `<circle class="mood-point" cx="${x(i).toFixed(1)}" cy="${y(mood).toFixed(1)}" r="4"/>`;
+        const windowMoods = moodsBetween(all, addDays(day, -6), day).map((m) => m.mood);
+        if (windowMoods.length >= 2) {
+          path += `${penDown ? "L" : "M"}${x(i).toFixed(1)} ${y(average(windowMoods)).toFixed(1)} `;
+          penDown = true;
+        } else {
+          penDown = false; // leave a gap where there's too little data
+        }
+      }
+
+      const firstLabel = formatDate(addDays(today, -29), { month: "short", day: "numeric" });
+      return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Mood over the last 30 days">
+        ${grid}
+        <path class="avg-line" d="${path.trim()}"/>
+        ${dots}
+        <text class="axis-label" x="${left}" y="${height - 6}">${firstLabel}</text>
+        <text class="axis-label" x="${width - right}" y="${height - 6}" text-anchor="end">Today</text>
+      </svg>
+      <div class="legend"><span class="l-dot">Each day</span><span class="l-line">7-day average</span></div>`;
+    }
+
+    function comparisonSentence() {
+      const { recent, before } = twoWeekAverages();
+      if (recent === null || before === null) return "";
+      const difference = recent - before;
+      if (difference > 0.3) return "The last two weeks have felt a little brighter than the two before.";
+      if (difference < -0.3) return "The last two weeks have felt a little heavier than the two before. Be gentle with yourself.";
+      return "The last two weeks have felt about the same as the two before.";
+    }
+
+    function weekdaySentence() {
+      const names = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
+      const since = addDays(todayKey(), -89);
+      const byWeekday = Array.from({ length: 7 }, () => []);
+      for (const m of loggedMoods()) if (m.date >= since) byWeekday[keyToDate(m.date).getDay()].push(m.mood);
+      const averages = byWeekday
+        .map((moods, weekday) => ({ weekday, avg: average(moods), count: moods.length }))
+        .filter((w) => w.count >= 2);
+      if (averages.length < 4) return "";
+      averages.sort((a, b) => b.avg - a.avg);
+      const brightest = averages[0];
+      const heaviest = averages[averages.length - 1];
+      if (brightest.avg - heaviest.avg < 0.5) return "Your days of the week feel fairly even.";
+      return `${names[brightest.weekday]} tend to feel brightest, and ${names[heaviest.weekday]} tend to feel heaviest.`;
+    }
+
+    // Split text into words. Intl.Segmenter understands Chinese (which has no
+    // spaces); older browsers fall back to a simpler split.
+    const wordSegmenter = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter("zh", { granularity: "word" }) : null;
+    const SKIP_WORDS = new Set(SETTINGS.skipWords);
+    const hasChinese = (word) => /[㐀-鿿豈-﫿]/.test(word);
+
+    function wordsIn(text) {
+      let words = [];
+      if (wordSegmenter) {
+        for (const piece of wordSegmenter.segment(text)) if (piece.isWordLike) words.push(piece.segment);
+      } else {
+        for (const run of text.match(/[\p{L}\p{N}][\p{L}\p{N}'’]*/gu) || []) {
+          if (hasChinese(run)) for (let i = 0; i < run.length - 1; i++) words.push(run.slice(i, i + 2));
+          else words.push(run);
+        }
+      }
+      return words
+        .map((w) => w.toLowerCase().replace(/['’]s$/, ""))
+        .filter((w) => !/^\d+$/.test(w) && w.length >= (hasChinese(w) ? 2 : 3) && !SKIP_WORDS.has(w));
+    }
+
+    // Words that show up on the most Good/Bright days (each day counts once per word).
+    function brightDayWords() {
+      const counts = new Map();
+      for (const day of writtenDays()) {
+        const entry = data.entries[day];
+        if (!entry.mood || entry.mood < 4) continue;
+        const text = allAnswers(entry).map((a) => a.text).join(" ");
+        for (const word of new Set(wordsIn(text))) counts.set(word, (counts.get(word) || 0) + 1);
+      }
+      return [...counts.entries()]
+        .filter(([, count]) => count >= 2)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    }
+
+    function longerViewHTML() {
+      if (loggedMoods().length < 7) {
+        return `<h2>The longer view</h2>
+          <p class="muted">After about a week of evenings with a mood picked, gentle patterns will show up here.</p>`;
+      }
+      const comparison = comparisonSentence();
+      const weekdays = weekdaySentence();
+      const words = brightDayWords();
+      return `<h2>The longer view</h2>
+        <p class="muted small">The last 30 days</p>
+        ${moodChartSVG()}
+        ${comparison ? `<p>${comparison}</p>` : ""}
+        ${weekdays ? `<p>${weekdays}</p>` : ""}
+        ${words.length ? `<h3>Words from your Good and Bright days</h3>
+          <div class="word-chips">${words.map(([word, count]) =>
+            `<span class="word-chip">${escapeHTML(word)}<small>${count}</small></span>`).join("")}</div>` : ""}`;
+    }
+
+    function helpsHTML() {
+      const helpful = helpfulThings();
+      const head = `<h2>What seems to help</h2>
+        <p class="muted small">Things you write about more on your Good and Bright days than on other days.</p>`;
+      if (helpful === null) {
+        return `${head}<p class="muted">After about a week of evenings with a mood picked, this will show what tends to come with your better days.</p>`;
+      }
+      if (!helpful.length) {
+        return `${head}<p class="muted">Nothing stands out yet. Writing about what you did, like walks, friends, or sleep, helps this find patterns.</p>`;
+      }
+      const today = todayKey();
+      const items = helpful.map((h) => {
+        const since = daysBetween(h.lastDate, today);
+        const last = since === 0 ? "today" : since === 1 ? "yesterday" : `${since} days ago`;
+        return `<li><span class="help-name">${escapeHTML(h.helper.name)}</span>
+          <span class="muted small">On ${h.goodDays} of your ${h.goodTotal} Good/Bright days · last mentioned ${last}</span></li>`;
+      }).join("");
+      return `${head}<ul class="help-list">${items}</ul>`;
+    }
+
+    function rhythmHTML() {
+      const total = writtenDays().length;
+      return `<h2>Your rhythm</h2>
+        <p>You wrote on ${daysWrittenInLast7()} of the last 7 evenings.</p>
+        <div class="stats">
+          <div><div class="big-number">${total}</div><span class="muted small">pages in total</span></div>
+        </div>
+        <p class="muted">${escapeHTML(SETTINGS.rhythmNote)}</p>`;
+    }
+
+    function dataSectionHTML() {
+      return `<h2>Your data</h2>
+        <p>Your pages are saved only in this browser, on this device. Nothing is sent anywhere.
+          Save a backup now and then, so clearing your browser or changing phones doesn't lose them.</p>
+        <div class="stack">
+          <button class="btn" data-action="backup-save">Save a backup</button>
+          <label class="btn" for="restore-file">Restore from backup</label>
+          <input type="file" id="restore-file" accept=".json,application/json" class="visually-hidden">
+        </div>
+        <h3>Try it out</h3>
+        <p class="muted small">Demo entries are marked "demo" and never replace your real pages.</p>
+        <div class="stack">
+          <button class="btn" data-action="demo-add">Add demo entries</button>
+          <button class="btn" data-action="demo-heavy">Preview a heavy week</button>
+          <button class="btn" data-action="demo-remove">Remove demo entries</button>
+        </div>`;
+    }
+
+    function renderInsights() {
+      view("insights").innerHTML = `
+        <header class="page-head"><h1>Insights</h1></header>
+        <section class="card" id="calendar-card">${calendarHTML()}</section>
+        <section class="card">${longerViewHTML()}</section>
+        <section class="card">${helpsHTML()}</section>
+        <section class="card">${rhythmHTML()}</section>
+        <section class="card">${dataSectionHTML()}</section>
+      `;
+    }
+
+    /* =====================================================================
+       BACKUP AND RESTORE
+       ===================================================================== */
+    function downloadBackup() {
+      const backup = { app: "Evening Pages", version: 1, exportedAt: new Date().toISOString(), entries: data.entries, prefs: data.prefs };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `evening-pages-backup-${todayKey()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast("Backup saved to your downloads");
+    }
+
+    // Check one entry from a backup file and keep only the parts that look right.
+    function cleanEntry(day, raw) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !raw || typeof raw !== "object") return null;
+      const entry = {
+        mood: Number.isInteger(raw.mood) && raw.mood >= 1 && raw.mood <= 5 ? raw.mood : null,
+        answers: {},
+        updatedAt: Number(raw.updatedAt) || 0,
+      };
+      for (const [id, answer] of Object.entries(raw.answers || {})) {
+        if (id === "__proto__" || !answer || typeof answer.text !== "string" || !answer.text.trim()) continue;
+        entry.answers[id] = { question: typeof answer.question === "string" ? answer.question : "", text: answer.text };
+      }
+      if (raw.demo) entry.demo = true;
+      if (raw.released) entry.released = true;
+      if (Array.isArray(raw.releasedAnswers)) {
+        entry.releasedAnswers = raw.releasedAnswers
+          .filter((a) => a && typeof a.text === "string" && a.text.trim())
+          .map((a) => ({ question: typeof a.question === "string" ? a.question : "", text: a.text }));
+      }
+      return hasContent(entry) ? entry : null;
+    }
+
+    // Merge a backup in, keeping whichever version of each day was edited most recently.
+    function restoreBackup(text) {
+      let backup;
+      try {
+        backup = JSON.parse(text);
+      } catch (error) {
+        backup = null;
+      }
+      if (!backup || typeof backup.entries !== "object" || backup.entries === null) {
+        showToast("That file doesn't look like an Evening Pages backup.");
+        return;
+      }
+      let added = 0, updated = 0;
+      for (const [day, raw] of Object.entries(backup.entries)) {
+        const incoming = cleanEntry(day, raw);
+        if (!incoming) continue;
+        const existing = data.entries[day];
+        if (!existing) {
+          data.entries[day] = incoming;
+          added++;
+        } else if (incoming.updatedAt > (existing.updatedAt || 0)) {
+          data.entries[day] = incoming;
+          updated++;
+        }
+      }
+      const knownIds = new Set(allPrompts().map((p) => p.id));
+      for (const p of backup.prefs?.customPrompts || []) {
+        if (p && typeof p.id === "string" && typeof p.text === "string" && p.text.trim() && !knownIds.has(p.id)) {
+          data.prefs.customPrompts.push({ id: p.id, text: p.text.trim(), hint: "" });
+        }
+      }
+      saveData();
+      renderInsights();
+      showToast(`Restored: ${added} new, ${updated} updated`);
+    }
+
+    /* =====================================================================
+       DEMO ENTRIES
+       Sample pages for trying the app out. Each is marked demo: true.
+       ===================================================================== */
+    const DEMO_TEXT = {
+      happy: [
+        "Coffee with Maya between classes. We laughed about nothing for twenty minutes.",
+        "The sunset on the walk back from the library was pink and gold.",
+        "Found a quiet corner in Grainger and actually focused for two hours.",
+        "Mom sent a photo of the dog sleeping in my old bed.",
+        "Made pasta with my roommate and it turned out really well.",
+        "A stranger complimented my sweater.",
+        "Got a good grade back on the problem set I was nervous about.",
+        "Listened to a new album on a long walk across the quad.",
+        "The first cold morning of the year. Hot chocolate tasted perfect.",
+        "My code finally passed all the tests and I did a tiny dance in the lab.",
+        "Called my grandma. She told me the same story again and I didn't mind at all.",
+        "和室友一起做了晚饭，聊了很久。",
+        "下课的时候看到一只松鼠抱着一整个苹果在啃，太可爱了。",
+        "收到了家里寄来的零食包裹。",
+      ],
+      grateful: [
+        "My roommate, who always leaves the kitchen light on for me.",
+        "Warm socks and a quiet evening.",
+        "A friend who checked in without me asking.",
+        "That the bus came right on time in the cold.",
+        "Office hours. The TA explained recursion in a way that finally clicked.",
+        "My family calling on Sunday.",
+        "Having a whole free afternoon.",
+        "My study group. We're all confused together, which helps.",
+        "Good headphones on a loud day.",
+        "The dining hall had my favorite soup.",
+        "图书馆的阳光很好。",
+        "朋友愿意听我说了一个小时的烦心事。",
+      ],
+      proud: [
+        "Started the essay instead of putting it off again.",
+        "Went to the gym even though I didn't feel like it.",
+        "Spoke up in discussion section.",
+        "Said no to something I didn't have time for.",
+        "Finished the lab early and helped someone else debug theirs.",
+        "Got through a long day without snapping at anyone.",
+        "Emailed my professor to ask for help. That was hard for me.",
+        "Cleaned my whole room. It feels like a new place.",
+        "Kept going on a problem I wanted to give up on.",
+        "终于把作业写完了。",
+        "第一次在课上主动回答问题。",
+      ],
+      kind: [
+        "Maya brought me a coffee without me asking.",
+        "I held the elevator for someone carrying a huge box.",
+        "My lab partner stayed late to help me finish.",
+        "A classmate shared their notes when I missed lecture.",
+        "I texted a friend who's been quiet lately, just to say hi.",
+        "The bus driver waited when he saw me running.",
+        "I let myself take a nap without feeling guilty. That counts too.",
+        "室友帮我取了快递。",
+      ],
+      learn: [
+        "Recursion is just trusting the smaller version of the problem.",
+        "I work much better in the morning than late at night.",
+        "How to make proper scrambled eggs: low heat, keep stirring.",
+        "Asking a question in class is less scary than I thought.",
+        "That I need more breaks than I usually give myself.",
+        "A new word: \"sonder\", the feeling that everyone has a life as full as yours.",
+        "Reading the error message carefully saves so much time.",
+        "学会了用一种新的方法做笔记。",
+      ],
+      energy: [
+        "Energy: the walk in the sun. Drained: three hours of scrolling.",
+        "Energy: talking with friends at lunch. Drained: the long lecture after.",
+        "Energy: a good night's sleep. Drained: skipping breakfast.",
+        "Energy: finishing a task. Drained: worrying about all the others.",
+        "Energy: music while studying. Drained: a crowded, loud dining hall.",
+        "充电的是和朋友散步，耗电的是熬夜赶作业。",
+      ],
+      care: [
+        "Went to bed before midnight for once.",
+        "Took a long shower and put on clean pajamas.",
+        "Ate a real dinner, with vegetables.",
+        "Went for a short walk between classes.",
+        "Put my phone away for an hour and read a book.",
+        "Said no to going out because I needed rest.",
+        "给自己泡了一杯热茶，什么都没做，就安静地坐了一会儿。",
+      ],
+      letgo: [
+        "The awkward thing I said in section. Nobody remembers it but me.",
+        "Worrying about the exam. I studied; that's what I can do.",
+        "Comparing my progress to everyone else's.",
+        "Being annoyed at my roommate about the dishes.",
+        "The feeling that I should have done more today.",
+        "那句让我不开心的话，不值得一直想。",
+      ],
+      differently: [
+        "Go to bed before midnight.",
+        "Put my phone in the other room while studying.",
+        "Eat an actual lunch instead of snacks.",
+        "Ask for help sooner instead of staring at the bug for an hour.",
+        "Take a real break between classes.",
+        "Start the reading the day it's assigned, not the night before.",
+        "Drink more water. Seriously.",
+        "Be a little less hard on myself when things go wrong.",
+        "早点开始写作业，不要拖到最后。",
+      ],
+      tomorrow: [
+        "A slow breakfast.",
+        "Finish the reading before class.",
+        "Call Maya back.",
+        "A walk outside, even a short one.",
+        "Start the project early.",
+        "Just a calm day.",
+        "Go to office hours with my questions ready.",
+        "Try the new café near campus.",
+        "One thing crossed off the list, that's all.",
+        "希望明天能睡个好觉。",
+      ],
+      oneword: [
+        "Calm", "Busy", "Tired", "Hopeful", "Cozy", "Scattered", "Steady",
+        "Bright", "Enough", "Grateful", "平静", "充实",
+      ],
+      // Extra "energy" answers for Good/Bright demo days, so "What seems to help" has a pattern to find.
+      brightEnergy: [
+        "Energy: a long walk in the sun after class.",
+        "Energy: the gym this morning. Drained: nothing much!",
+        "Energy: dinner with friends. We laughed a lot.",
+        "Energy: I slept eight hours for once.",
+        "Energy: walking home through the park with music on.",
+        "充电的是和朋友出门散步，晒了很久的太阳。",
+        "充电的是早上去跑步。",
+      ],
+      heavy: {
+        "g-weighing": [
+          "Midterms all landing in the same week. I feel behind on everything.",
+          "I've been lonely lately and I don't really know why.",
+          "Not sleeping well. Everything feels harder.",
+          "Worried about the exam and about home.",
+          "I feel like everyone else has it figured out except me.",
+          "最近压力很大，总觉得时间不够用。",
+        ],
+        "g-okay": [
+          "The soup at dinner was warm and good.",
+          "My friend texted me a funny video.",
+          "I made it to class.",
+          "It stopped raining for my walk home.",
+          "I finished one small assignment.",
+          "听到一首很喜欢的歌。",
+        ],
+        "g-help": [
+          "Going to bed early tonight.",
+          "Making a short list for tomorrow instead of a long one.",
+          "Taking a walk before starting homework.",
+          "Eating something warm.",
+          "Telling one person how I actually feel.",
+          "明天给自己留一点休息的时间。",
+        ],
+        "g-lean": [
+          "Maya. I could tell her how I've been feeling.",
+          "My sister, maybe a call this weekend.",
+          "The counseling center has walk-in hours.",
+          "My roommate, who always asks how my day was.",
+          "妈妈，周末可以给她打个电话。",
+        ],
+        "g-friend": [
+          "That it's okay to have a hard week. It doesn't mean you're failing.",
+          "You're doing more than you think. Rest is allowed.",
+          "This feeling won't last forever.",
+          "You don't have to carry all of it at once.",
+          "慢慢来，你已经很努力了。",
+        ],
+      },
+    };
+
+    // How often each prompt gets a demo answer: the ones on by default
+    // are answered most evenings, the others now and then.
+    const DEMO_ANSWER_CHANCE = { happy: 0.8, grateful: 0.75, proud: 0.65, differently: 0.55, tomorrow: 0.7 };
+
+    function isRealEntry(day) { return !!data.entries[day] && !data.entries[day].demo; }
+
+    function demoAnswer(promptId, list) {
+      const prompt = allPrompts().find((p) => p.id === promptId) || SETTINGS.gentlePrompts.find((p) => p.id === promptId);
+      return { question: prompt.text, text: randomItem(list) };
+    }
+
+    function addDemoEntries() {
+      const today = todayKey();
+      let added = 0;
+      for (let daysAgo = 42; daysAgo >= 1; daysAgo--) {
+        const day = addDays(today, -daysAgo);
+        if (isRealEntry(day) || Math.random() < 0.15) continue; // skip some days, like real life
+        // Moods drift slowly up and down, a little brighter on weekends.
+        const weekday = keyToDate(day).getDay();
+        const weekend = weekday === 0 || weekday === 6 ? 0.5 : 0;
+        const drift = 3.3 + Math.sin(daysAgo / 6) * 0.9 + weekend + (Math.random() * 2 - 1);
+        const mood = Math.min(5, Math.max(1, Math.round(drift)));
+
+        const answers = {};
+        for (const prompt of SETTINGS.prompts) {
+          if (Math.random() < (DEMO_ANSWER_CHANCE[prompt.id] || 0.2)) answers[prompt.id] = demoAnswer(prompt.id, DEMO_TEXT[prompt.id]);
+        }
+        if (mood >= 4 && Math.random() < 0.6) answers.energy = demoAnswer("energy", DEMO_TEXT.brightEnergy);
+        data.entries[day] = { mood, answers, updatedAt: Date.now(), demo: true };
+        added++;
+      }
+      saveData();
+      renderInsights();
+      showToast(`Added ${added} demo pages`);
+    }
+
+    function addHeavyWeek() {
+      const today = todayKey();
+      const moods = [2, 1, 2, 2, 1, 2, 1];
+      let added = 0;
+      for (let daysAgo = 7; daysAgo >= 1; daysAgo--) {
+        const day = addDays(today, -daysAgo);
+        if (isRealEntry(day)) continue;
+        const answers = {};
+        for (const [id, list] of Object.entries(DEMO_TEXT.heavy)) {
+          if (Math.random() < 0.75) answers[id] = demoAnswer(id, list);
+        }
+        data.entries[day] = { mood: moods[7 - daysAgo], answers, updatedAt: Date.now(), demo: true };
+        added++;
+      }
+      delete data.ui.checkinSnoozeUntil; // so the check-in card can show right away
+      saveData();
+      renderInsights();
+      showToast(`Added a heavy week (${added} demo pages). Open Today to see the check-in.`);
+    }
+
+    function removeDemoEntries() {
+      let removed = 0;
+      for (const day of Object.keys(data.entries)) {
+        if (data.entries[day].demo) {
+          delete data.entries[day];
+          removed++;
+        }
+      }
+      saveData();
+      renderInsights();
+      showToast(removed ? `Removed ${removed} demo pages` : "There were no demo pages to remove");
+    }
+
+    /* =====================================================================
+       EVENTS
+       One listener per event type handles every button, using the
+       data-action attribute to decide what to do.
+       ===================================================================== */
+    const RENDERERS = {
+      today: renderToday,
+      history: renderHistory,
+      insights: renderInsights,
+      prompts: renderPrompts,
+      entry: renderEntry,
+    };
+
+    const ACTIONS = {
+      "tab": (button) => showView(button.dataset.tab),
+      "back": () => showView(currentTab),
+      "pick-mood": (button) => pickMood(Number(button.dataset.mood)),
+      "gentle-on": () => setGentle(true),
+      "gentle-off": () => setGentle(false),
+      "checkin-snooze": () => {
+        data.ui.checkinSnoozeUntil = addDays(todayKey(), SETTINGS.checkin.snoozeDays);
+        saveData();
+        rerenderKeepingScroll(renderToday);
+      },
+      "memory-next": () => {
+        const today = todayKey();
+        const index = data.ui.memory?.date === today ? data.ui.memory.index : 0;
+        data.ui.memory = { date: today, index: index + 1 };
+        saveData();
+        rerenderKeepingScroll(renderToday);
+      },
+      "memory-hide": () => {
+        data.ui.memoryHiddenOn = todayKey();
+        saveData();
+        rerenderKeepingScroll(renderToday);
+      },
+      "appearance-toggle": () => {
+        appearanceOpen = !appearanceOpen;
+        rerenderKeepingScroll(renderToday);
+      },
+      "set-theme": (button) => setTheme(button.dataset.theme),
+      "idea-next": () => {
+        const today = todayKey();
+        const index = data.ui.idea?.date === today ? data.ui.idea.index : 0;
+        data.ui.idea = { date: today, index: index + 1 };
+        saveData();
+        rerenderKeepingScroll(renderToday);
+      },
+      "idea-hide": () => {
+        data.ui.ideaHiddenOn = todayKey();
+        saveData();
+        rerenderKeepingScroll(renderToday);
+      },
+      "done": finishToday,
+      "release": releaseTonight,
+      "open-prompts": () => { promptError = ""; showView("prompts"); },
+      "remove-prompt": (button) => removeCustomPrompt(button.dataset.id),
+      "filter-mood": (button) => {
+        const level = Number(button.dataset.mood);
+        historyMood = historyMood === level ? null : level;
+        renderHistory();
+      },
+      "open-entry": (button) => openEntry(button.dataset.date),
+      "delete-entry": deleteEntry,
+      "cal-prev": () => changeMonth(-1),
+      "cal-next": () => changeMonth(1),
+      "backup-save": downloadBackup,
+      "demo-add": addDemoEntries,
+      "demo-heavy": addHeavyWeek,
+      "demo-remove": removeDemoEntries,
+    };
+
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-action]");
+      if (button && ACTIONS[button.dataset.action]) ACTIONS[button.dataset.action](button);
+    });
+
+    document.addEventListener("input", (event) => {
+      if (event.target.matches("textarea[data-prompt-id]")) onAnswerInput(event.target);
+      if (event.target.id === "history-search") {
+        historyQuery = event.target.value;
+        renderHistoryList();
+      }
+    });
+
+    document.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target.dataset.togglePrompt) togglePrompt(target.dataset.togglePrompt, target.checked);
+      if (target.id === "restore-file" && target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = () => restoreBackup(reader.result);
+        reader.readAsText(target.files[0]);
+      }
+    });
+
+    document.addEventListener("submit", (event) => {
+      if (event.target.id === "add-prompt-form") {
+        event.preventDefault();
+        addCustomPrompt(document.getElementById("new-prompt").value);
+      }
+    });
+
+    // Save when the app is hidden or closed; check for a new day when it comes back.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) flushSave();
+      else checkForNewDay();
+    });
+    window.addEventListener("pagehide", flushSave);
+    window.addEventListener("focus", checkForNewDay);
+
+    // If following the phone, switch when the phone switches.
+    phonePrefersLight.addEventListener("change", applyTheme);
+
+    // Start on Today.
+    applyTheme();
+    showView("today");
+  </script>
+</body>
+</html>
