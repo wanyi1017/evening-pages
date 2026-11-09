@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- No pinch or double-tap zoom, so it feels like an app. Text is already 17px. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="A quiet, private space for a few minutes of evening reflection.">
   <meta name="theme-color" content="#121417">
   <!-- These let the page open full-screen when added to a phone's home screen. -->
@@ -91,7 +92,7 @@
        =================================================================== */
     * { box-sizing: border-box; }
 
-    html { -webkit-text-size-adjust: 100%; }
+    html { -webkit-text-size-adjust: 100%; touch-action: manipulation; /* no double-tap zoom */ }
 
     body {
       margin: 0;
@@ -2465,6 +2466,9 @@
         addCustomPrompt(document.getElementById("new-prompt").value);
       }
     });
+
+    // iPhone Safari can ignore the "no zoom" setting, so stop pinch gestures here too.
+    document.addEventListener("gesturestart", (event) => event.preventDefault());
 
     // Escape closes the Appearance card on a laptop.
     document.addEventListener("keydown", (event) => {
