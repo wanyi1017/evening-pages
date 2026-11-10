@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Evening Pages icon: a crescent moon over a teal-to-sand evening sky. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5F7E7C"/>
+      <stop offset="0.55" stop-color="#9DAEA2"/>
+      <stop offset="1" stop-color="#E6DCC8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <path d="M248.4 118.2 A128 128 0 1 0 369.3 305.6 A112 112 0 0 1 248.4 118.2Z" fill="#F6E3D6"/>
+</svg>

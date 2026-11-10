@@ -12,6 +12,10 @@
   <meta name="apple-mobile-web-app-title" content="Evening Pages">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <title>Evening Pages</title>
+  <!-- App icon and install details, so it looks right on the home screen. -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2485,6 +2489,14 @@
 
     // If following the phone, switch when the phone switches.
     phonePrefersLight.addEventListener("change", applyTheme);
+
+    // Keep a copy on the phone so the app opens offline (see sw.js).
+    // Only on a real web address; a file opened from disk can't use this.
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("sw.js").catch(() => {
+        // Without it the app still works; it just needs a connection to open.
+      });
+    }
 
     // Start on Today.
     applyTheme();
