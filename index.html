@@ -776,6 +776,13 @@
 
       rhythmNote: "Missing a day is fine. What counts is coming back.",
 
+      // A gentle nudge to save a backup, shown after "Done for today".
+      backupReminder: {
+        firstAfterPages: 7,  // never backed up, and this many pages written
+        thenEveryPages: 14,  // this many pages written or changed since the last backup
+        laterDays: 7,        // "Later" hides it for this long
+      },
+
       // Things that often help, and the words that show you wrote about them.
       // The app compares how often each comes up on Good/Bright days versus
       // other days. Those that come up more on good days become ideas on a
@@ -1421,6 +1428,7 @@
         </div>
         <p class="closing-line" id="closing-line">${escapeHTML(closingLine)}</p>
         ${closingLine && canRelease(entry) ? releaseOfferHTML() : ""}
+        ${closingLine && backupReminderDue(todayKey()) ? backupReminderHTML() : ""}
       `;
     }
 
@@ -1496,7 +1504,7 @@
       flushSave();
       closingLine = randomItem(SETTINGS.closingLines);
       rerenderKeepingScroll(renderToday);
-      const target = document.getElementById("release-offer") || document.getElementById("closing-line");
+      const target = document.getElementById("release-offer") || document.getElementById("backup-reminder") || document.getElementById("closing-line");
       target.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
@@ -2027,6 +2035,7 @@
       return `<h2>Your data</h2>
         <p>Your pages are saved only in this browser, on this device. Nothing is sent anywhere.
           Save a backup now and then, so clearing your browser or changing phones doesn't lose them.</p>
+        <p class="muted" id="backup-status">${escapeHTML(backupStatusText())}</p>
         <div class="stack">
           <button class="btn" data-action="backup-save">Save a backup</button>
           <label class="btn" for="restore-file">Restore from backup</label>
@@ -2055,18 +2064,87 @@
     /* =====================================================================
        BACKUP AND RESTORE
        ===================================================================== */
-    function downloadBackup() {
+    function backupText() {
       const backup = { app: "Evening Pages", version: 1, exportedAt: new Date().toISOString(), entries: data.entries, prefs: data.prefs };
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `evening-pages-backup-${todayKey()}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showToast("Backup saved to your downloads");
+      return JSON.stringify(backup, null, 2);
+    }
+
+    // On a phone this opens the share sheet ("Save to Files", AirDrop, Mail...);
+    // on a computer it downloads the file.
+    async function saveBackup() {
+      const name = `evening-pages-backup-${todayKey()}.json`;
+      const file = new File([backupText()], name, { type: "application/json" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: "Evening Pages backup" });
+        } catch (error) {
+          if (error.name === "AbortError") return; // closed the share sheet: nothing saved
+          showToast("Couldn't open the share menu. Try again from Insights.");
+          return;
+        }
+        recordBackup();
+        showToast("Backup saved");
+      } else {
+        const url = URL.createObjectURL(file);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        recordBackup();
+        showToast("Backup saved to your downloads");
+      }
+      if (currentView === "today") rerenderKeepingScroll(renderToday);
+      if (currentView === "insights") rerenderKeepingScroll(renderInsights);
+    }
+
+    function recordBackup() {
+      data.ui.lastBackupAt = Date.now();
+      delete data.ui.backupLaterUntil;
+      saveData();
+    }
+
+    // Your own pages (not demo ones) written or changed since the last backup.
+    function pagesSinceBackup() {
+      const since = data.ui.lastBackupAt || 0;
+      return writtenDays().filter((day) => !data.entries[day].demo && (data.entries[day].updatedAt || 0) > since).length;
+    }
+
+    function backupReminderDue(day) {
+      const rules = SETTINGS.backupReminder;
+      if (data.ui.backupLaterUntil && day < data.ui.backupLaterUntil) return false;
+      const needed = data.ui.lastBackupAt ? rules.thenEveryPages : rules.firstAfterPages;
+      return pagesSinceBackup() >= needed;
+    }
+
+    function snoozeBackupReminder() {
+      data.ui.backupLaterUntil = addDays(todayKey(), SETTINGS.backupReminder.laterDays);
+      saveData();
+    }
+
+    function backupReminderHTML() {
+      const pages = pagesSinceBackup();
+      const message = data.ui.lastBackupAt
+        ? `You've written ${pages} pages since your last backup.`
+        : `You've written ${pages} pages, and none of them are backed up yet.`;
+      return `<section class="card backup-reminder" id="backup-reminder">
+        <p>${message} Save a copy, so they're safe if you change phones or remove the app.</p>
+        <div class="row">
+          <button class="btn primary" data-action="backup-save">Save a backup</button>
+          <button class="btn" data-action="backup-later">Later</button>
+        </div>
+      </section>`;
+    }
+
+    function backupStatusText() {
+      if (!data.ui.lastBackupAt) return "No backup yet.";
+      const day = dateKey(new Date(data.ui.lastBackupAt));
+      const when = day === todayKey() ? "today" : formatDate(day, { month: "long", day: "numeric" });
+      const pages = pagesSinceBackup();
+      const since = pages === 0 ? "nothing new since" : pages === 1 ? "1 page since" : `${pages} pages since`;
+      return `Last backup: ${when}, ${since}.`;
     }
 
     // Check one entry from a backup file and keep only the parts that look right.
@@ -2122,6 +2200,10 @@
           data.prefs.customPrompts.push({ id: p.id, text: p.text.trim(), hint: "" });
         }
       }
+      // Bring back which questions were turned on, keeping only ones this app knows.
+      const restoredIds = new Set(allPrompts().map((p) => p.id));
+      const enabled = (backup.prefs?.enabledPromptIds || []).filter((id) => typeof id === "string" && restoredIds.has(id));
+      if (enabled.length) data.prefs.enabledPromptIds = enabled;
       saveData();
       renderInsights();
       showToast(`Restored: ${added} new, ${updated} updated`);
@@ -2435,7 +2517,12 @@
       "delete-entry": deleteEntry,
       "cal-prev": () => changeMonth(-1),
       "cal-next": () => changeMonth(1),
-      "backup-save": downloadBackup,
+      "backup-save": saveBackup,
+      "backup-later": () => {
+        snoozeBackupReminder();
+        rerenderKeepingScroll(renderToday);
+        showToast(`I'll remind you again in ${SETTINGS.backupReminder.laterDays} days`);
+      },
       "demo-add": addDemoEntries,
       "demo-heavy": addHeavyWeek,
       "demo-remove": removeDemoEntries,
