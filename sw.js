@@ -45,6 +45,11 @@ self.addEventListener("fetch", (event) => {
         if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
+          // Opening the app keeps the offline fallback page up to date too.
+          if (request.mode === "navigate") {
+            const page = response.clone();
+            caches.open(CACHE).then((cache) => cache.put("index.html", page));
+          }
         }
         return response;
       })
