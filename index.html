@@ -64,13 +64,13 @@
        buttons and flamingo-coral moons. */
     :root[data-theme="light"] {
       color-scheme: light;
-      --bg: #F4ECE6;           /* soft beige-peach, below the fade */
-      --page-fade: linear-gradient(180deg, #7C9A97 0, #AEBAB1 220px, #E6DAD0 520px, #F4ECE6 900px);
+      --bg: #F8F3EF;           /* soft beige-peach, below the fade */
+      --page-fade: linear-gradient(180deg, #7C9A97 0, #AEBAB1 220px, #ECE3DC 520px, #F8F3EF 900px);
       --head-text: #FBF7F0;    /* page titles sit on the teal */
       --head-muted: #EDE7DC;
       --head-dot: #E09F77;
-      --surface: #FFFBF7;      /* cards */
-      --field: #FFFBF7;        /* text boxes stand out from the sand */
+      --surface: #FFFDFA;      /* cards */
+      --field: #FFFDFA;        /* text boxes stand out from the sand */
       --text: #3B3D40;
       --muted: #5F5E56;
       --accent: #545659;       /* charcoal */
@@ -335,6 +335,8 @@
       box-shadow: var(--shadow);
       outline: none;
     }
+    .word-count { display: none; }
+    body.focus-writing .prompt.is-focused .word-count { display: block; text-align: right; font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
     @keyframes focus-in { from { opacity: 0; } to { opacity: 1; } }
 
     .done-row { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
@@ -1418,6 +1420,7 @@
           <span class="q">${escapeHTML(p.text)}</span>
           ${hintFor(p, renderedDay) ? `<span class="hint">${escapeHTML(hintFor(p, renderedDay))}</span>` : ""}
           <textarea rows="2" data-prompt-id="${escapeHTML(p.id)}" data-question="${escapeHTML(p.text)}">${escapeHTML(value)}</textarea>
+          <span class="word-count"></span>
         </label>`;
       }).join("");
       const empty = prompts.length ? "" : `<p class="muted">No prompts are on right now. Picking a mood is plenty, or turn some prompts on.</p>`;
@@ -1485,8 +1488,22 @@
       document.body.classList.add("focus-writing");
       boxes.forEach((box, i) => box.closest(".prompt").classList.toggle("is-focused", i === index));
       document.getElementById("focus-count").textContent = `${index + 1} of ${boxes.length}`;
+      showWordCount(boxes[index]);
       document.getElementById("focus-next").hidden = index === boxes.length - 1;
       if (!wasFocused) window.scrollTo(0, 0);
+    }
+
+    // Each Chinese or Japanese character counts as one word, like a 字数 count; other words are split on spaces.
+    const CJK_CHARACTER = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/g;
+    function countWords(text) {
+      const characters = (text.match(CJK_CHARACTER) || []).length;
+      const words = text.replace(CJK_CHARACTER, " ").split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word)).length;
+      return characters + words;
+    }
+
+    function showWordCount(textarea) {
+      const count = countWords(textarea.value);
+      textarea.closest(".prompt").querySelector(".word-count").textContent = `${count} ${count === 1 ? "word" : "words"}`;
     }
 
     function leaveFocus() {
@@ -1556,6 +1573,7 @@
     // you pause for a moment (that's the "debounce").
     function onAnswerInput(textarea) {
       autoGrow(textarea);
+      if (focusedPromptId) showWordCount(textarea);
       const day = renderedDay;
       const id = textarea.dataset.promptId;
       const entry = ensureEntry(day);
