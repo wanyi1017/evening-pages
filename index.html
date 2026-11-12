@@ -69,8 +69,8 @@
       --head-text: #FBF7F0;    /* page titles sit on the teal */
       --head-muted: #EDE7DC;
       --head-dot: #E09F77;
-      --surface: #FFFDFA;      /* cards */
-      --field: #FFFDFA;        /* text boxes stand out from the sand */
+      --surface: #FFFFFF;      /* cards */
+      --field: #FFFFFF;        /* text boxes stand out from the sand */
       --text: #3B3D40;
       --muted: #5F5E56;
       --accent: #545659;       /* charcoal */
@@ -98,10 +98,18 @@
 
     html { -webkit-text-size-adjust: 100%; touch-action: manipulation; /* no double-tap zoom */ }
 
+    /* The fade is fixed to the screen, so it stays behind the page while you scroll a long History. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: var(--page-fade) top / 100% 100vh no-repeat, var(--bg);
+    }
     body {
       margin: 0;
-      /* The fade is always 900px tall, so short pages end smoothly in the base color. */
-      background: var(--page-fade) top / 100% 900px no-repeat, var(--bg);
+      background: var(--bg);
       color: var(--text);
       /* Inter for English; PingFang / Noto Sans for Chinese. */
       font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
