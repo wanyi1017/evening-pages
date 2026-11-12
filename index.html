@@ -64,13 +64,13 @@
        buttons and flamingo-coral moons. */
     :root[data-theme="light"] {
       color-scheme: light;
-      --bg: #E6DCC8;           /* warm sand, below the fade */
-      --page-fade: linear-gradient(180deg, #7C9A97 0, #A7B2A4 220px, #D9CDB7 520px, #E6DCC8 900px);
+      --bg: #F4ECE6;           /* soft beige-peach, below the fade */
+      --page-fade: linear-gradient(180deg, #7C9A97 0, #AEBAB1 220px, #E6DAD0 520px, #F4ECE6 900px);
       --head-text: #FBF7F0;    /* page titles sit on the teal */
       --head-muted: #EDE7DC;
       --head-dot: #E09F77;
-      --surface: #FAF6EF;      /* cards */
-      --field: #FAF6EF;        /* text boxes stand out from the sand */
+      --surface: #FFFBF7;      /* cards */
+      --field: #FFFBF7;        /* text boxes stand out from the sand */
       --text: #3B3D40;
       --muted: #5F5E56;
       --accent: #545659;       /* charcoal */
@@ -80,7 +80,7 @@
       --gold: #E09F77;         /* flamingo coral moons and dots */
       --gold-text: #8A4F2E;
       --gold-soft: #F6E3D6;
-      --border: #E2D9C8;
+      --border: #EADFD6;
       --moon-dark: #E9E2D6;
       --moon-ring: #A49B88;
       --danger: #A5503F;
@@ -300,6 +300,42 @@
     .prompt { display: block; margin-top: 22px; }
     .prompt .q { display: block; font-weight: 600; }
     .prompt .hint { display: block; font-size: 0.88rem; color: var(--muted); margin: 2px 0 8px; }
+
+    /* Focus mode: while writing, only the question being answered stays on screen. */
+    .focus-bar { display: none; }
+    body.focus-writing .focus-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; }
+    .focus-count { font-size: 0.85rem; text-align: center; letter-spacing: 0.04em; }
+    .focus-icon {
+      width: 44px; height: 44px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; border-radius: 50%; cursor: pointer;
+    }
+    .focus-icon[data-action="focus-exit"] { margin-left: -11px; } /* line the icons up with the question's edges */
+    .focus-icon[data-action="focus-next"] { margin-right: -11px; justify-self: end; }
+    .focus-icon[hidden] { display: flex; visibility: hidden; } /* keeps "2 of 5" centered on the last question */
+    .focus-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    /* The question sits on the bright top of the gradient, so it uses the same colors as the page title. */
+    body.focus-writing .focus-icon,
+    body.focus-writing .prompt.is-focused .q { color: var(--head-text); }
+    body.focus-writing .focus-count,
+    body.focus-writing .prompt.is-focused .hint { color: var(--head-muted); }
+    body.focus-writing #view-today > :not(.prompts-section),
+    body.focus-writing .prompts-section > :not(.focus-bar):not(.is-focused),
+    body.focus-writing .bottom-nav { display: none; }
+    body.focus-writing .prompt.is-focused { margin-top: 28px; animation: focus-in 0.35s ease; }
+    body.focus-writing .prompt.is-focused .q { font-size: 1.2rem; }
+    /* The answer box looks like the cards on the main page: soft edge and shadow, no thick focus ring. */
+    body.focus-writing .prompt.is-focused textarea {
+      min-height: 40vh;
+      margin-top: 6px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    @keyframes focus-in { from { opacity: 0; } to { opacity: 1; } }
 
     .done-row { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
     .save-status { font-size: 0.85rem; color: var(--muted); }
@@ -1163,6 +1199,7 @@
 
     function showView(name) {
       flushSave();
+      if (focusedPromptId) leaveFocus();
       currentView = name;
       if (TABS.includes(name)) currentTab = name;
       document.querySelectorAll(".view").forEach((view) => { view.hidden = view.id !== "view-" + name; });
@@ -1385,7 +1422,17 @@
       }).join("");
       const empty = prompts.length ? "" : `<p class="muted">No prompts are on right now. Picking a mood is plenty, or turn some prompts on.</p>`;
       const gentleOffer = gentle ? "" : `<button class="link-btn" data-action="gentle-on">Switch to gentler questions tonight</button>`;
-      return `<section>
+      const focusBar = `<div class="focus-bar">
+          <button class="focus-icon" data-action="focus-exit" aria-label="All questions" title="All questions">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg>
+          </button>
+          <span class="focus-count" id="focus-count"></span>
+          <button class="focus-icon" data-action="focus-next" id="focus-next" aria-label="Next question" title="Next question">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>`;
+      return `<section class="prompts-section">
+        ${prompts.length ? focusBar : ""}
         <div class="section-head">${head}</div>
         <p class="muted small">Answer as many or as few as you like.</p>
         ${fields}${empty}
@@ -1417,6 +1464,50 @@
         ${writingAreaHTML(entry, gentle)}
       `;
       view("today").querySelectorAll("textarea").forEach(autoGrow);
+      if (focusedPromptId) focusOnPrompt(focusedPromptId);
+    }
+
+    /* ---------------------------------------------------------------------
+       FOCUS MODE: tapping a question hides everything else until "All questions"
+       --------------------------------------------------------------------- */
+    let focusedPromptId = null;
+
+    function todayAnswerBoxes() {
+      return [...view("today").querySelectorAll("textarea[data-prompt-id]")];
+    }
+
+    function focusOnPrompt(id) {
+      const boxes = todayAnswerBoxes();
+      const index = boxes.findIndex((box) => box.dataset.promptId === id);
+      if (index === -1) { leaveFocus(); return; }
+      const wasFocused = document.body.classList.contains("focus-writing");
+      focusedPromptId = id;
+      document.body.classList.add("focus-writing");
+      boxes.forEach((box, i) => box.closest(".prompt").classList.toggle("is-focused", i === index));
+      document.getElementById("focus-count").textContent = `${index + 1} of ${boxes.length}`;
+      document.getElementById("focus-next").hidden = index === boxes.length - 1;
+      if (!wasFocused) window.scrollTo(0, 0);
+    }
+
+    function leaveFocus() {
+      const id = focusedPromptId;
+      focusedPromptId = null;
+      document.body.classList.remove("focus-writing");
+      document.querySelectorAll(".prompt.is-focused").forEach((label) => label.classList.remove("is-focused"));
+      if (document.activeElement?.matches("textarea")) document.activeElement.blur();
+      todayAnswerBoxes().forEach(autoGrow); // typing in focus mode stretched them to the tall size
+      const box = id && todayAnswerBoxes().find((b) => b.dataset.promptId === id);
+      if (box) box.closest(".prompt").scrollIntoView({ block: "center" });
+    }
+
+    function focusNextPrompt() {
+      const boxes = todayAnswerBoxes();
+      const index = boxes.findIndex((box) => box.dataset.promptId === focusedPromptId);
+      const next = boxes[index + 1];
+      if (!next) return;
+      focusOnPrompt(next.dataset.promptId);
+      next.focus();
+      window.scrollTo(0, 0);
     }
 
     function writingAreaHTML(entry, gentle) {
@@ -2504,6 +2595,8 @@
         saveData();
         rerenderKeepingScroll(renderToday);
       },
+      "focus-exit": leaveFocus,
+      "focus-next": focusNextPrompt,
       "done": finishToday,
       "release": releaseTonight,
       "open-prompts": () => { promptError = ""; showView("prompts"); },
@@ -2541,6 +2634,12 @@
       }
     });
 
+    // Tapping into an answer on Today opens focus mode for that question.
+    document.addEventListener("focusin", (event) => {
+      const box = event.target;
+      if (box.matches("textarea[data-prompt-id]") && box.closest("#view-today")) focusOnPrompt(box.dataset.promptId);
+    });
+
     document.addEventListener("change", (event) => {
       const target = event.target;
       if (target.dataset.togglePrompt) togglePrompt(target.dataset.togglePrompt, target.checked);
@@ -2561,9 +2660,10 @@
     // iPhone Safari can ignore the "no zoom" setting, so stop pinch gestures here too.
     document.addEventListener("gesturestart", (event) => event.preventDefault());
 
-    // Escape closes the Appearance card on a laptop.
+    // Escape closes the Appearance card, or leaves focus mode, on a laptop.
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && appearanceOpen) ACTIONS["appearance-toggle"]();
+      else if (event.key === "Escape" && focusedPromptId) leaveFocus();
     });
 
     // Save when the app is hidden or closed; check for a new day when it comes back.
