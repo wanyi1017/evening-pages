@@ -51,6 +51,7 @@
       --moon-dark: #3A3640;
       --moon-ring: #6E6A80;
       --rule: rgba(201, 224, 235, 0.16); /* notebook lines in the answer boxes */
+      --piece: #353140;        /* saved pieces under a question */
       --danger: #E39A8F;
       --shadow: none;
       /* "Let it go" scene: one soft moonlight glow over a denim-to-night sky. */
@@ -85,6 +86,7 @@
       --moon-dark: #E9E2D6;
       --moon-ring: #A49B88;
       --rule: rgba(124, 154, 151, 0.30);
+      --piece: #FBF6F1;
       --danger: #A5503F;
       --shadow: 0 1px 3px rgba(60, 50, 30, 0.08);
       /* "Let it go" scene: one soft teal glow over deep teal fading to charcoal. */
@@ -324,6 +326,35 @@
     .prompt .q { display: block; font-weight: 600; }
     .prompt .hint { display: block; font-size: 0.88rem; color: var(--muted); margin: 2px 0 8px; }
 
+    /* Saved pieces: each one is a small card above the writing box. */
+    .pieces { list-style: none; padding: 0; margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
+    .piece-text {
+      display: block; width: 100%; text-align: left; line-height: 1.5;
+      background: var(--piece); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+    }
+    .piece.just-saved { animation: piece-in 0.35s ease; }
+    @keyframes piece-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .piece.editing { background: var(--piece); border: 1px solid var(--border); border-radius: 14px; padding: 8px; }
+    .piece-edit { min-height: 0; }
+    .piece-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+    .small-btn { min-height: 38px; padding: 6px 18px; }
+    .link-btn.danger-link { color: var(--danger); }
+    .answer .pieces { margin: 6px 0 0; }
+
+    /* The writing box, with a round check mark that keeps what's written as a new piece. */
+    .writer { position: relative; }
+    .writer textarea { padding-right: 58px; }
+    .piece-save {
+      position: absolute; right: 8px; bottom: 8px; width: 40px; height: 40px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: none; border-radius: 50%; background: var(--accent); color: var(--on-accent);
+      transition: opacity 0.2s ease;
+    }
+    .piece-save:disabled { opacity: 0.25; cursor: default; }
+    .piece-save:not(:disabled):active { transform: scale(0.92); }
+    .piece-save svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
     /* Focus mode: while writing, only the question being answered stays on screen. */
     .focus-bar { display: none; }
     body.focus-writing .focus-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; }
@@ -348,10 +379,10 @@
     body.focus-writing .prompt.is-focused { margin-top: 28px; animation: focus-in 0.35s ease; }
     body.focus-writing .prompt.is-focused .q { font-size: 1.2rem; }
     /* The answer box looks like the cards on the main page: soft edge and shadow, no thick focus ring. */
-    body.focus-writing .prompt.is-focused textarea {
+    body.focus-writing .prompt.is-focused .writer textarea {
       min-height: 40vh;
       margin-top: 6px;
-      padding: 18px;
+      padding: 18px 58px 18px 18px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background: var(--notebook-lines), var(--surface) padding-box;
@@ -362,7 +393,26 @@
     body.focus-writing .prompt.is-focused .word-count { display: block; text-align: right; font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
     @keyframes focus-in { from { opacity: 0; } to { opacity: 1; } }
 
-    .done-row { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
+    .done-row { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+
+    /* Question tiles on Today. Outside focus mode only the tiles show; the full question opens from its tile. */
+    body:not(.focus-writing) .prompts-section .prompt { display: none; }
+    .prompt-tiles { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    .prompt-tile {
+      display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+      padding: 16px 18px; box-shadow: var(--shadow);
+    }
+    .prompt-tile:active { transform: scale(0.99); }
+    .tile-count {
+      flex: none; width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.88rem; background: var(--gold-soft);
+    }
+    .tile-count.empty { background: none; border: 1.5px dashed var(--moon-ring); opacity: 0.6; }
+    .tile-text { flex: 1; min-width: 0; }
+    .tile-q { display: block; font-weight: 600; }
+    .tile-peek { display: block; margin-top: 2px; font-size: 0.88rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .save-status { font-size: 0.85rem; color: var(--muted); }
     .closing-line { text-align: center; padding: 16px 6px; }
 
@@ -827,12 +877,12 @@
       // The greeting under today's date. {n} becomes a number.
       greetings: {
         firstTime: "Welcome. This is a quiet place to end your day.",
-        writtenToday: "Tonight's page is saved. Come back any time to add more.",
-        yesterday: "Good to see you again. Tonight's page is here when you're ready.",
-        returning: "Welcome back. No catching up needed, just tonight.",
+        writtenToday: "Today's page is saved. Come back whenever something comes to mind.",
+        yesterday: "Good to see you again. Today's page is here whenever you're ready.",
+        returning: "Welcome back. No catching up needed, just today.",
       },
 
-      // One of these appears when you tap "Done for today".
+      // One of these appears when you tap "I'm done for today".
       closingLines: [
         "That's enough for tonight. Rest well.",
         "Thank you for showing up for yourself.",
@@ -849,7 +899,7 @@
         snoozeDays: 3,
       },
 
-      // "Let it go": after "Done for today" on an evening with one of these moods,
+      // "Let it go": after "I'm done for today" on an evening with one of these moods,
       // you can let the page quietly fade away. The entry is always kept.
       release: {
         moods: [1, 2], // Heavy and Low. Add 3, 4, 5 to offer it on any evening.
@@ -868,7 +918,7 @@
         quality: 0.82,  // JPEG quality, 0 to 1
       },
 
-      // A gentle nudge to save a backup, shown after "Done for today".
+      // A gentle nudge to save a backup, shown after "I'm done for today".
       backupReminder: {
         firstAfterPages: 7,  // never backed up, and this many pages written
         thenEveryPages: 14,  // this many pages written or changed since the last backup
@@ -941,7 +991,7 @@
        Everything is kept in one localStorage item, shaped like this:
        {
          entries: { "2026-10-27": { mood: 1-5 or null,
-                                    answers: { promptId: { question, text } },
+                                    answers: { promptId: { question, text, pieces, draft } },
                                     updatedAt: timestamp, demo?: true } },
          prefs:   { enabledPromptIds: [...], customPrompts: [{ id, text, hint }] },
          ui:      small remembered choices, like "hide the memory card today"
@@ -1097,6 +1147,19 @@
     function allAnswers(entry) {
       return [...Object.values(entry.answers || {}), ...(entry.releasedAnswers || [])].filter((a) => a.text.trim());
     }
+    // An answer can hold several pieces, saved one at a time ("Autumn colors", then "A new snack").
+    // answer.pieces are the saved ones and answer.draft is what's still in the box; answer.text is
+    // always all of them joined, so search, insights and memories just read .text.
+    // Answers written before pieces existed only have .text, which counts as one piece.
+    function piecesOf(answer) { return answer?.pieces || (answer?.text?.trim() ? [answer.text] : []); }
+    function draftOf(answer) { return (answer?.pieces && answer.draft) || ""; }
+    function shownPieces(answer) { return [...piecesOf(answer), draftOf(answer)].filter((piece) => piece.trim()); }
+    function setAnswer(entry, promptId, question, pieces, draft) {
+      const kept = pieces.filter((piece) => piece.trim());
+      const text = [...kept, draft].filter((piece) => piece.trim()).join("\n");
+      if (text) entry.answers[promptId] = { question, text, pieces: kept, draft };
+      else delete entry.answers[promptId];
+    }
     function wroteOn(key) { return hasContent(data.entries[key]); }
     function writtenDays() { return Object.keys(data.entries).filter(wroteOn).sort(); }
 
@@ -1169,9 +1232,9 @@
       for (const day of writtenDays()) {
         if (day >= today) continue; // words you let go aren't in .answers, so they never come back here
         for (const [id, answer] of Object.entries(data.entries[day].answers || {})) {
-          if (SETTINGS.memoryPromptIds.includes(id) && answer.text.trim()) {
-            answers.push({ date: day, question: answer.question, text: answer.text.trim() });
-          }
+          if (!SETTINGS.memoryPromptIds.includes(id)) continue;
+          // Each piece is its own small memory.
+          for (const piece of shownPieces(answer)) answers.push({ date: day, question: answer.question, text: piece.trim() });
         }
       }
       const yearAgo = monthsAgoKey(today, 12);
@@ -1344,7 +1407,7 @@
     let appearanceOpen = false; // whether the Appearance choices are showing
     let renderedDay = null;   // which date the Today screen is showing
     let saveTimer = null;     // pending autosave
-    let closingLine = "";     // shown after "Done for today"
+    let closingLine = "";     // shown after "I'm done for today"
 
     function greetingText() {
       const g = SETTINGS.greetings;
@@ -1472,22 +1535,30 @@
       const head = gentle
         ? `<h2>Gentler questions for tonight</h2>
            <button class="link-btn" data-action="gentle-off">Back to my usual prompts</button>`
-        : `<h2>Tonight's questions</h2>
+        : `<h2>Today's questions</h2>
            <button class="link-btn" data-action="open-prompts">Choose prompts</button>`;
       const fields = prompts.map((p) => {
-        const value = entry?.answers?.[p.id]?.text || "";
-        return `<label class="prompt">
-          <span class="q">${escapeHTML(p.text)}</span>
+        const answer = entry?.answers?.[p.id];
+        const draft = draftOf(answer);
+        return `<div class="prompt">
+          <label class="q" for="answer-${escapeHTML(p.id)}">${escapeHTML(p.text)}</label>
           ${hintFor(p, renderedDay) ? `<span class="hint">${escapeHTML(hintFor(p, renderedDay))}</span>` : ""}
-          <textarea rows="2" data-prompt-id="${escapeHTML(p.id)}" data-question="${escapeHTML(p.text)}">${escapeHTML(value)}</textarea>
+          <ul class="pieces" data-pieces-for="${escapeHTML(p.id)}">${piecesListHTML(p.id, piecesOf(answer))}</ul>
+          <div class="writer">
+            <textarea rows="2" id="answer-${escapeHTML(p.id)}" data-prompt-id="${escapeHTML(p.id)}" data-question="${escapeHTML(p.text)}"
+              placeholder="${piecesOf(answer).length ? "One more…" : "One thing at a time…"}">${escapeHTML(draft)}</textarea>
+            <button type="button" class="piece-save" data-action="piece-save" data-prompt-id="${escapeHTML(p.id)}" aria-label="Save this one" ${draft.trim() ? "" : "disabled"}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            </button>
+          </div>
           <span class="word-count"></span>
           ${photoRowHTML(photosFor(entry, p.id), { promptId: p.id, question: p.text })}
-        </label>`;
+        </div>`;
       }).join("");
       const empty = prompts.length ? "" : `<p class="muted">No prompts are on right now. Picking a mood is plenty, or turn some prompts on.</p>`;
       const gentleOffer = gentle ? "" : `<button class="link-btn" data-action="gentle-on">Switch to gentler questions tonight</button>`;
       const focusBar = `<div class="focus-bar">
-          <button class="focus-icon" data-action="focus-exit" aria-label="All questions" title="All questions">
+          <button class="focus-icon" data-action="focus-exit" aria-label="Back to today" title="Back to today">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg>
           </button>
           <span class="focus-count" id="focus-count"></span>
@@ -1498,7 +1569,8 @@
       return `<section class="prompts-section">
         ${prompts.length ? focusBar : ""}
         <div class="section-head">${head}</div>
-        <p class="muted small">Answer as many or as few as you like.</p>
+        <p class="muted small">Pick any one, whenever something comes to mind.</p>
+        <div class="prompt-tiles" id="prompt-tiles"></div>
         ${fields}${empty}
         ${gentleOffer}
       </section>`;
@@ -1510,6 +1582,7 @@
       renderedDay = today;
       const entry = data.entries[today];
       const gentle = data.ui.gentleDate === today;
+      editingPiece = null; // edits are saved as you type, so a redraw can safely close one
 
       view("today").innerHTML = `
         <header class="page-head with-corner">
@@ -1528,6 +1601,7 @@
         ${writingAreaHTML(entry, gentle)}
       `;
       view("today").querySelectorAll("textarea").forEach(autoGrow);
+      refreshTiles();
       showPhotos(view("today"));
       if (focusedPromptId) focusOnPrompt(focusedPromptId);
     }
@@ -1539,6 +1613,50 @@
 
     function todayAnswerBoxes() {
       return [...view("today").querySelectorAll("textarea[data-prompt-id]")];
+    }
+
+    /* ---------------------------------------------------------------------
+       QUESTION TILES: Today shows each question as its own small tile, with
+       how many pieces it has. Tapping one opens just that question (focus
+       mode), so you can write a little whenever you like and come back later.
+       The tiles are built from the answer boxes, so both always list the same questions.
+       --------------------------------------------------------------------- */
+    function promptTilesHTML() {
+      const entry = data.entries[renderedDay];
+      return todayAnswerBoxes().map((box) => {
+        const id = box.dataset.promptId;
+        const answer = entry?.answers?.[id];
+        const saved = piecesOf(answer).filter((piece) => piece.trim());
+        const draft = draftOf(answer).trim();
+        const photos = photosFor(entry, id).length;
+        let peek = saved.length ? saved[saved.length - 1] : "Nothing yet, no rush.";
+        if (draft) peek = `Still writing: ${draft}`;
+        if (photos) peek = (saved.length || draft ? peek + " · " : "") + `${photos} ${photos === 1 ? "photo" : "photos"}`;
+        const written = saved.length || draft || photos;
+        const label = `${box.dataset.question} (${saved.length ? `${saved.length} written` : "nothing yet"})`;
+        return `<button type="button" class="prompt-tile" data-action="open-prompt" data-prompt-id="${escapeHTML(id)}" aria-label="${escapeHTML(label)}">
+          <span class="tile-count${saved.length ? "" : " empty"}" aria-hidden="true">${saved.length || ""}</span>
+          <span class="tile-text">
+            <span class="tile-q">${escapeHTML(box.dataset.question)}</span>
+            <span class="tile-peek${written ? "" : " quiet"}">${escapeHTML(peek)}</span>
+          </span>
+        </button>`;
+      }).join("");
+    }
+
+    // Draw the tiles again from the boxes (after Today is drawn, and when coming back from a question).
+    function refreshTiles() {
+      const tiles = document.getElementById("prompt-tiles");
+      if (tiles) tiles.innerHTML = promptTilesHTML();
+    }
+
+    function openPrompt(button) {
+      const id = button.dataset.promptId;
+      focusOnPrompt(id);
+      const box = todayAnswerBoxes().find((b) => b.dataset.promptId === id);
+      if (!box) return;
+      box.focus();
+      box.setSelectionRange(box.value.length, box.value.length); // carry on after any unsaved words
     }
 
     function focusOnPrompt(id) {
@@ -1563,8 +1681,9 @@
       return characters + words;
     }
 
+    // Counts every piece of the answer, plus what's still in the box.
     function showWordCount(textarea) {
-      const count = countWords(textarea.value);
+      const count = countWords(data.entries[renderedDay]?.answers?.[textarea.dataset.promptId]?.text || "");
       textarea.closest(".prompt").querySelector(".word-count").textContent = `${count} ${count === 1 ? "word" : "words"}`;
     }
 
@@ -1575,8 +1694,10 @@
       document.querySelectorAll(".prompt.is-focused").forEach((label) => label.classList.remove("is-focused"));
       if (document.activeElement?.matches("textarea")) document.activeElement.blur();
       todayAnswerBoxes().forEach(autoGrow); // typing in focus mode stretched them to the tall size
-      const box = id && todayAnswerBoxes().find((b) => b.dataset.promptId === id);
-      if (box) box.closest(".prompt").scrollIntoView({ block: "center" });
+      refreshTiles();
+      refreshRhythm();
+      const tile = id && document.querySelector(`.prompt-tile[data-prompt-id="${CSS.escape(id)}"]`);
+      if (tile) tile.scrollIntoView({ block: "center" });
     }
 
     function focusNextPrompt() {
@@ -1593,7 +1714,7 @@
       return `
         ${promptsSectionHTML(entry, gentle)}
         <div class="done-row">
-          <button class="btn primary" data-action="done">Done for today</button>
+          <button class="link-btn" data-action="done">I'm done for today</button>
           <span class="save-status" id="save-status" aria-live="polite"></span>
         </div>
         <p class="closing-line" id="closing-line">${escapeHTML(closingLine)}</p>
@@ -1602,7 +1723,7 @@
       `;
     }
 
-    // After "Done for today" on a heavy evening: choose a way to let the page go.
+    // After "I'm done for today" on a heavy evening: choose a way to let the page go.
     function releaseOfferHTML() {
       return `<section class="card release-offer" id="release-offer">
         <p>${escapeHTML(SETTINGS.release.offer)}</p>
@@ -1633,18 +1754,131 @@
 
     // Typing updates the data right away; writing to storage waits until
     // you pause for a moment (that's the "debounce").
+    // What's typed in the box is kept as the answer's draft, so it's never lost,
+    // even if you close the app before tapping the check mark.
     function onAnswerInput(textarea) {
       autoGrow(textarea);
-      if (focusedPromptId) showWordCount(textarea);
-      const day = renderedDay;
       const id = textarea.dataset.promptId;
-      const entry = ensureEntry(day);
-      if (textarea.value.trim()) entry.answers[id] = { question: textarea.dataset.question, text: textarea.value };
-      else delete entry.answers[id];
-      touchEntry(day);
+      const entry = ensureEntry(renderedDay);
+      setAnswer(entry, id, textarea.dataset.question, piecesOf(entry.answers[id]), textarea.value);
+      textarea.parentElement.querySelector(".piece-save").disabled = !textarea.value.trim();
+      if (focusedPromptId) showWordCount(textarea);
+      answerChanged();
+    }
+
+    function answerChanged() {
+      touchEntry(renderedDay);
       setSaveStatus("Saving…");
       clearTimeout(saveTimer);
       saveTimer = setTimeout(flushSave, 700);
+    }
+
+    /* ---------------------------------------------------------------------
+       PIECES: under each question, write one thing, tap the check mark to
+       keep it as a small card, then write the next. Tap a card to change it.
+       --------------------------------------------------------------------- */
+    // While a card is being changed, editingPiece holds its own copy of that question's pieces,
+    // so emptying a card while typing doesn't shift which card the next keystroke goes to.
+    let editingPiece = null; // { promptId, index, question, pieces }
+
+    function piecesListHTML(promptId, pieces, justSaved = -1) {
+      return pieces.map((piece, index) => {
+        if (editingPiece?.promptId === promptId && editingPiece.index === index) {
+          return `<li class="piece editing">
+            <textarea rows="1" class="piece-edit" aria-label="Change this one">${escapeHTML(piece)}</textarea>
+            <div class="piece-actions">
+              <button type="button" class="link-btn danger-link" data-action="piece-remove">Remove</button>
+              <button type="button" class="btn small-btn" data-action="piece-done">Done</button>
+            </div>
+          </li>`;
+        }
+        if (!piece.trim()) return "";
+        return `<li class="piece${index === justSaved ? " just-saved" : ""}">
+          <button type="button" class="piece-text" data-action="piece-edit" data-prompt-id="${escapeHTML(promptId)}" data-index="${index}">${escapeHTML(piece)}</button>
+        </li>`;
+      }).join("");
+    }
+
+    function storedAnswer(promptId) { return data.entries[renderedDay]?.answers?.[promptId]; }
+    function writingBox(promptId) { return view("today").querySelector(`textarea[data-prompt-id="${CSS.escape(promptId)}"]`); }
+
+    // Redraw one question's cards without touching its writing box.
+    function renderPieces(promptId, justSaved = -1) {
+      const list = view("today").querySelector(`[data-pieces-for="${CSS.escape(promptId)}"]`);
+      if (!list) return;
+      const pieces = editingPiece?.promptId === promptId ? editingPiece.pieces : piecesOf(storedAnswer(promptId));
+      list.innerHTML = piecesListHTML(promptId, pieces, justSaved);
+      const box = writingBox(promptId);
+      box.placeholder = piecesOf(storedAnswer(promptId)).length ? "One more…" : "One thing at a time…";
+      if (focusedPromptId) showWordCount(box);
+      const editBox = list.querySelector(".piece-edit");
+      if (editBox) {
+        autoGrow(editBox);
+        editBox.focus();
+        editBox.setSelectionRange(editBox.value.length, editBox.value.length);
+      }
+    }
+
+    // Write a question's pieces back, keeping whatever is in its writing box as the draft.
+    function storePieces(promptId, question, pieces) {
+      setAnswer(ensureEntry(renderedDay), promptId, question, pieces, writingBox(promptId)?.value || "");
+      answerChanged();
+      flushSave();
+    }
+
+    function savePiece(button) {
+      const promptId = button.dataset.promptId;
+      const box = writingBox(promptId);
+      if (!box || !box.value.trim()) return;
+      closePiece();
+      const pieces = [...piecesOf(storedAnswer(promptId)), box.value.trim()];
+      box.value = "";
+      button.disabled = true;
+      autoGrow(box);
+      storePieces(promptId, box.dataset.question, pieces);
+      renderPieces(promptId, pieces.length - 1);
+      box.focus(); // stay in the box, ready for the next one
+    }
+
+    function editPiece(button) {
+      const promptId = button.dataset.promptId;
+      let index = Number(button.dataset.index);
+      // The button's number counts the open card's copy, which may still hold an emptied card.
+      if (editingPiece?.promptId === promptId) index = editingPiece.pieces.slice(0, index).filter((piece) => piece.trim()).length;
+      closePiece();
+      const answer = storedAnswer(promptId);
+      if (!answer) return;
+      editingPiece = { promptId, index, question: answer.question, pieces: [...piecesOf(answer)] };
+      renderPieces(promptId);
+    }
+
+    // Typing in a card's box changes that piece right away.
+    function onPieceEditInput(textarea) {
+      autoGrow(textarea);
+      if (!editingPiece) return;
+      const { promptId, question, pieces, index } = editingPiece;
+      pieces[index] = textarea.value;
+      setAnswer(ensureEntry(renderedDay), promptId, question, pieces, writingBox(promptId)?.value || "");
+      if (focusedPromptId) showWordCount(writingBox(promptId));
+      answerChanged();
+    }
+
+    // Close the open card (its words are already saved); a card left empty disappears.
+    function closePiece() {
+      if (!editingPiece) return;
+      const { promptId } = editingPiece;
+      editingPiece = null;
+      renderPieces(promptId);
+    }
+
+    function removePiece() {
+      if (!editingPiece) return;
+      const { promptId, index, question, pieces } = editingPiece;
+      editingPiece = null;
+      pieces.splice(index, 1);
+      storePieces(promptId, question, pieces);
+      renderPieces(promptId);
+      showToast("Removed");
     }
 
     // Write any pending typing to storage now.
@@ -1935,7 +2169,12 @@
       }
       const answers = Object.values(entry.answers || {}).filter((a) => a.text.trim());
       const released = (entry.releasedAnswers || []).filter((a) => a.text.trim());
-      const answerHTML = (a, photoIds = []) => `<div class="answer"><p class="q">${escapeHTML(a.question)}</p>${a.text.trim() ? `<p class="a">${escapeHTML(a.text)}</p>` : ""}${photoIds.length ? photoRowHTML(photoIds) : ""}</div>`;
+      const answerHTML = (a, photoIds = []) => {
+        const pieces = shownPieces(a);
+        return `<div class="answer"><p class="q">${escapeHTML(a.question)}</p>
+          ${pieces.length ? `<ul class="pieces">${pieces.map((piece) => `<li class="piece"><span class="piece-text">${escapeHTML(piece)}</span></li>`).join("")}</ul>` : ""}
+          ${photoIds.length ? photoRowHTML(photoIds) : ""}</div>`;
+      };
       // Each question with its photos; questions that only have photos come after.
       const answerIds = Object.keys(entry.answers || {}).filter((id) => entry.answers[id].text.trim());
       const photoOnly = Object.entries(entry.photos || {}).filter(([id, group]) => group.ids.length && !answerIds.includes(id));
@@ -2557,7 +2796,13 @@
       };
       for (const [id, answer] of Object.entries(raw.answers || {})) {
         if (id === "__proto__" || !answer || typeof answer.text !== "string" || !answer.text.trim()) continue;
-        entry.answers[id] = { question: typeof answer.question === "string" ? answer.question : "", text: answer.text };
+        const question = typeof answer.question === "string" ? answer.question : "";
+        if (Array.isArray(answer.pieces)) {
+          const pieces = answer.pieces.filter((piece) => typeof piece === "string");
+          setAnswer(entry, id, question, pieces, typeof answer.draft === "string" ? answer.draft : "");
+        } else {
+          entry.answers[id] = { question, text: answer.text };
+        }
       }
       if (raw.demo) entry.demo = true;
       if (raw.released) entry.released = true;
@@ -2570,7 +2815,16 @@
       if (Array.isArray(raw.releasedAnswers)) {
         entry.releasedAnswers = raw.releasedAnswers
           .filter((a) => a && typeof a.text === "string" && a.text.trim())
-          .map((a) => ({ question: typeof a.question === "string" ? a.question : "", text: a.text }));
+          .map((a) => {
+            const released = { question: typeof a.question === "string" ? a.question : "", text: a.text };
+            if (Array.isArray(a.pieces)) {
+              released.pieces = a.pieces.filter((piece) => typeof piece === "string" && piece.trim());
+              released.draft = typeof a.draft === "string" ? a.draft : "";
+              released.text = [...released.pieces, released.draft].filter((piece) => piece.trim()).join("\n");
+            }
+            return released;
+          })
+          .filter((a) => a.text.trim());
       }
       return hasContent(entry) ? entry : null;
     }
@@ -2812,9 +3066,13 @@
 
     function isRealEntry(day) { return !!data.entries[day] && !data.entries[day].demo; }
 
+    // A demo answer is one to three different pieces, like a real evening.
     function demoAnswer(promptId, list) {
       const prompt = allPrompts().find((p) => p.id === promptId) || SETTINGS.gentlePrompts.find((p) => p.id === promptId);
-      return { question: prompt.text, text: randomItem(list) };
+      const roll = Math.random();
+      const count = Math.min(list.length, roll < 0.45 ? 1 : roll < 0.8 ? 2 : 3);
+      const pieces = [...list].sort(() => Math.random() - 0.5).slice(0, count);
+      return { question: prompt.text, text: pieces.join("\n"), pieces, draft: "" };
     }
 
     function addDemoEntries() {
@@ -2933,6 +3191,11 @@
       "photo-open": openPhoto,
       "photo-close": closePhoto,
       "photo-remove": removePhoto,
+      "piece-save": savePiece,
+      "piece-edit": editPiece,
+      "piece-done": closePiece,
+      "piece-remove": removePiece,
+      "open-prompt": openPrompt,
       "focus-exit": leaveFocus,
       "focus-next": focusNextPrompt,
       "done": finishToday,
@@ -2966,10 +3229,17 @@
 
     document.addEventListener("input", (event) => {
       if (event.target.matches("textarea[data-prompt-id]")) onAnswerInput(event.target);
+      if (event.target.matches(".piece-edit")) onPieceEditInput(event.target);
       if (event.target.id === "history-search") {
         historyQuery = event.target.value;
         renderHistoryList();
       }
+    });
+
+    // Tapping the check mark shouldn't take the cursor out of the box (that would close the
+    // phone's keyboard between pieces), so the press itself does nothing; the click saves.
+    document.addEventListener("pointerdown", (event) => {
+      if (event.target.closest(".piece-save")) event.preventDefault();
     });
 
     // Tapping into an answer on Today opens focus mode for that question.
