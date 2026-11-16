@@ -152,7 +152,6 @@
     /* Page titles sit on the top of the page, where the fade is brightest. */
     .page-head h1, .page-head .link-btn { color: var(--head-text); }
     .page-head .eyebrow, .page-head .greeting, .page-head .muted, .page-head .dot-label { color: var(--head-muted); }
-    .page-head .dot:not(.filled) { border-color: var(--head-muted); }
     .page-head .dot.filled { background: var(--head-dot); border-color: var(--head-dot); }
 
     /* The Appearance button in the top corner of Today, and its choices. */
@@ -276,7 +275,6 @@
     .day-dot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--moon-ring); }
     .dot.filled { background: var(--gold); border-color: var(--gold); }
-    .dot.today { border-style: dashed; }
     .dot-label { font-size: 0.7rem; color: var(--muted); }
 
     .memory { background: var(--gold-soft); border-color: transparent; }
@@ -418,10 +416,10 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 0.88rem; background: var(--gold-soft);
     }
-    .tile-count.empty { background: none; border: 1.5px dashed var(--moon-ring); opacity: 0.6; }
     .tile-text { flex: 1; min-width: 0; }
     .tile-q { display: block; font-weight: 600; }
     .tile-peek { display: block; margin-top: 2px; font-size: 0.88rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tile-peek.quiet { font-style: italic; opacity: 0.8; } /* a hint, not something you wrote */
     .save-status { font-size: 0.85rem; color: var(--muted); }
     .closing-line { text-align: center; padding: 16px 6px; }
 
@@ -1435,16 +1433,19 @@
       return wroteOn(addDays(todayKey(), -1)) ? g.yesterday : g.returning;
     }
 
+    // One dot for each day you wrote this past week. Days you didn't write get no empty
+    // slot, so the row shows what you did, never what you missed.
     function weekDotsHTML() {
       const today = todayKey();
       let dots = "";
       for (let i = 6; i >= 0; i--) {
         const day = addDays(today, -i);
-        const style = wroteOn(day) ? "filled" : i === 0 ? "today" : "";
-        dots += `<span class="day-dot"><span class="dot ${style}"></span>
+        if (!wroteOn(day)) continue;
+        dots += `<span class="day-dot"><span class="dot filled"></span>
           <span class="dot-label">${formatDate(day, { weekday: "narrow" })}</span></span>`;
       }
-      return `<div class="week-dots" role="img" aria-label="Written on ${daysWrittenInLast7()} of the last 7 days">${dots}</div>`;
+      if (!dots) return "";
+      return `<div class="week-dots" role="img" aria-label="${escapeHTML(pastWeekText())}">${dots}</div>`;
     }
 
     function checkinCardHTML(today, gentle) {
@@ -1648,17 +1649,19 @@
         const saved = piecesOf(answer).filter((piece) => piece.trim());
         const draft = draftOf(answer).trim();
         const photos = photosFor(entry, id).length;
-        let peek = saved.length ? saved[saved.length - 1] : "Nothing yet, no rush.";
+        // An unwritten question shows its gentle hint, an invitation rather than an empty box to fill.
+        const hint = box.closest(".prompt").querySelector(".hint")?.textContent || "Whenever you'd like.";
+        let peek = saved.length ? saved[saved.length - 1] : hint;
         if (draft) peek = `Still writing: ${draft}`;
         if (photos) peek = (saved.length || draft ? peek + " · " : "") + `${photos} ${photos === 1 ? "photo" : "photos"}`;
         const written = saved.length || draft || photos;
-        const label = `${box.dataset.question} (${saved.length ? `${saved.length} written` : "nothing yet"})`;
+        const label = saved.length ? `${box.dataset.question} (${saved.length} written)` : box.dataset.question;
         return `<button type="button" class="prompt-tile" data-action="open-prompt" data-prompt-id="${escapeHTML(id)}" aria-label="${escapeHTML(label)}">
-          <span class="tile-count${saved.length ? "" : " empty"}" aria-hidden="true">${saved.length || ""}</span>
           <span class="tile-text">
             <span class="tile-q">${escapeHTML(box.dataset.question)}</span>
             <span class="tile-peek${written ? "" : " quiet"}">${escapeHTML(peek)}</span>
           </span>
+          ${saved.length ? `<span class="tile-count" aria-hidden="true">${saved.length}</span>` : ""}
         </button>`;
       }).join("");
     }
@@ -2497,20 +2500,25 @@
       if (!helpful.length) {
         return `${head}<p class="muted">Nothing stands out yet. Writing about what you did, like walks, friends, or sleep, helps this find patterns.</p>`;
       }
-      const today = todayKey();
+      // No "last mentioned 3 days ago": that reads like a nudge to do it again.
       const items = helpful.map((h) => {
-        const since = daysBetween(h.lastDate, today);
-        const last = since === 0 ? "today" : since === 1 ? "yesterday" : `${since} days ago`;
         return `<li><span class="help-name">${escapeHTML(h.helper.name)}</span>
-          <span class="muted small">On ${h.goodDays} of your ${h.goodTotal} Good/Bright days · last mentioned ${last}</span></li>`;
+          <span class="muted small">On ${h.goodDays} Good/Bright ${h.goodDays === 1 ? "day" : "days"}</span></li>`;
       }).join("");
       return `${head}<ul class="help-list">${items}</ul>`;
+    }
+
+    // Only what you did, never "X of 7": the days you missed aren't counted against you.
+    function pastWeekText() {
+      const days = daysWrittenInLast7();
+      if (!days) return "Today's page is here whenever you'd like.";
+      return `You stopped by ${days === 1 ? "once" : `on ${days} days`} this past week.`;
     }
 
     function rhythmHTML() {
       const total = writtenDays().length;
       return `<h2>Your rhythm</h2>
-        <p>You wrote on ${daysWrittenInLast7()} of the last 7 evenings.</p>
+        <p>${escapeHTML(pastWeekText())}</p>
         <div class="stats">
           <div><div class="big-number">${total}</div><span class="muted small">pages in total</span></div>
         </div>
