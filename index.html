@@ -284,6 +284,15 @@
     .memory .question { font-size: 0.9rem; color: var(--muted); margin-top: 8px; }
     .memory blockquote { margin: 4px 0 0; font-size: 1.05rem; white-space: pre-wrap; }
 
+    /* Good things on Insights. */
+    .good-count { margin: 8px 0 0; font-size: 1.05rem; }
+    .good-count strong { font-size: 1.6rem; margin-right: 2px; }
+    .good-pick-btn { margin-top: 10px; }
+    .good-pick { margin-top: 16px; padding: 14px 16px; border-radius: 14px; background: var(--gold-soft); animation: piece-in 0.35s ease; }
+    .good-pick .good-date { min-height: 0; padding: 0; font-size: 0.82rem; color: var(--muted); }
+    .good-pick .question { font-size: 0.9rem; color: var(--muted); margin: 6px 0 0; }
+    .good-pick blockquote { margin: 4px 0 0; font-size: 1.05rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+
     .checkin { border-color: var(--accent); }
 
     .idea { background: var(--accent-soft); border-color: transparent; }
@@ -976,10 +985,15 @@
         "she her his him its it's i'm i've i'd from about just really very today tonight day days got get " +
         "did didn't don't also some more much what when then than there here which who would could should " +
         "will can been being into out over after before because made make felt feel feeling little bit lot " +
-        "one two all any even still like how too again things thing something myself went going things " +
+        "one two all any even still like how too again things thing something myself went going " +
         "happy grateful proud kind learned tomorrow good great nice glad thankful well want wanted " +
         "maybe though while where why way back time first last other others every each such only " +
         "without instead put between take real around through until another anything everything someone actually " +
+        "new old long short hard easy whole small big few many lots enough almost already always never sometimes ever " +
+        "else own same different better best worse bad right next pretty quite finally probably usually " +
+        "gave give gives came come coming said told tried try trying need needed makes doing done " +
+        "nothing anyone everyone somewhere ask asked asking " +
+        "其实 可能 一天 一起 有点儿 特别 好像 应该 需要 开始 最后 只是 还要 而已 " +
         "今天 我们 你们 他们 她们 自己 一个 一些 没有 什么 因为 所以 但是 然后 就是 还是 可以 觉得 已经 " +
         "这个 那个 这样 那样 时候 非常 真的 有点 有些 一点 一下 很多 感觉 开心 感谢 感恩 骄傲 明天 今晚 " +
         "不是 而且 如果 虽然 一直 还有 的话 比较 起来 知道 现在 东西 我的 一样 这么 那么 完了 终于"
@@ -1225,18 +1239,23 @@
       return mostlyLow || lowInARow || dropping ? "concern" : null;
     }
 
+    // Every happy / grateful / proud piece, oldest day first. Each piece is its own small good thing.
+    // Words you let go are kept in releasedAnswers, not .answers, so they never come back here.
+    function goodThings() {
+      const things = [];
+      for (const day of writtenDays()) {
+        for (const [id, answer] of Object.entries(data.entries[day].answers || {})) {
+          if (!SETTINGS.memoryPromptIds.includes(id)) continue;
+          for (const piece of shownPieces(answer)) things.push({ date: day, question: answer.question, text: piece.trim() });
+        }
+      }
+      return things;
+    }
+
     // Past happy / grateful / proud answers, best match first.
     function memoryCandidates() {
       const today = todayKey();
-      const answers = [];
-      for (const day of writtenDays()) {
-        if (day >= today) continue; // words you let go aren't in .answers, so they never come back here
-        for (const [id, answer] of Object.entries(data.entries[day].answers || {})) {
-          if (!SETTINGS.memoryPromptIds.includes(id)) continue;
-          // Each piece is its own small memory.
-          for (const piece of shownPieces(answer)) answers.push({ date: day, question: answer.question, text: piece.trim() });
-        }
-      }
+      const answers = goodThings().filter((thing) => thing.date < today);
       const yearAgo = monthsAgoKey(today, 12);
       const monthAgo = monthsAgoKey(today, 1);
       const fromYear = answers.filter((a) => a.date === yearAgo).map((a) => ({ ...a, label: "One year ago today" }));
@@ -2389,14 +2408,23 @@
         .filter((w) => !/^\d+$/.test(w) && w.length >= (hasChinese(w) ? 2 : 3) && !SKIP_WORDS.has(w));
     }
 
-    // Words that show up on the most Good/Bright days (each day counts once per word).
+    // Words from the questions themselves ("energy" in "What gave you energy...") say nothing about your day.
+    function questionWords() {
+      return new Set([...allPrompts(), ...SETTINGS.gentlePrompts].flatMap((prompt) => wordsIn(prompt.text)));
+    }
+
+    // Words that show up on the most Good/Bright days (each day counts once per word),
+    // leaving out filler words and words that only echo the questions.
     function brightDayWords() {
+      const skip = questionWords();
       const counts = new Map();
       for (const day of writtenDays()) {
         const entry = data.entries[day];
         if (!entry.mood || entry.mood < 4) continue;
         const text = allAnswers(entry).map((a) => a.text).join(" ");
-        for (const word of new Set(wordsIn(text))) counts.set(word, (counts.get(word) || 0) + 1);
+        for (const word of new Set(wordsIn(text))) {
+          if (!skip.has(word)) counts.set(word, (counts.get(word) || 0) + 1);
+        }
       }
       return [...counts.entries()]
         .filter(([, count]) => count >= 2)
@@ -2420,6 +2448,43 @@
         ${words.length ? `<h3>Words from your Good and Bright days</h3>
           <div class="word-chips">${words.map(([word, count]) =>
             `<span class="word-chip">${escapeHTML(word)}<small>${count}</small></span>`).join("")}</div>` : ""}`;
+    }
+
+    /* ---------------------------------------------------------------------
+       GOOD THINGS: every piece saved under a happy, grateful or proud
+       question is counted here, and you can pull out an old one at random.
+       --------------------------------------------------------------------- */
+    let pickedGoodThing = null; // the good thing pulled out, if any
+
+    function goodThingsHTML() {
+      const things = goodThings();
+      const head = `<h2>Your good things</h2>`;
+      if (!things.length) {
+        return `${head}
+          <p class="muted">Each thing you save under a happy, grateful or proud question is kept here, one at a time.</p>`;
+      }
+      const monthStart = todayKey().slice(0, 8) + "01";
+      const thisMonth = things.filter((thing) => thing.date >= monthStart).length;
+      const pick = pickedGoodThing && things.some((t) => t.date === pickedGoodThing.date && t.text === pickedGoodThing.text) ? pickedGoodThing : null;
+      return `${head}
+        <p class="good-count"><strong>${things.length}</strong> ${things.length === 1 ? "good thing" : "good things"} saved
+          <span class="muted small">· ${thisMonth} this month</span></p>
+        <button class="btn good-pick-btn" data-action="good-thing-pick">${pick ? "Another one" : "Pull one out"}</button>
+        ${pick ? `<div class="good-pick" aria-live="polite">
+          <button class="link-btn good-date" data-action="open-entry" data-date="${pick.date}">${formatDate(pick.date, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</button>
+          <p class="question">${escapeHTML(pick.question)}</p>
+          <blockquote>${escapeHTML(pick.text)}</blockquote>
+        </div>` : ""}`;
+    }
+
+    // Pull a different good thing than the one showing, when there's more than one.
+    function pickGoodThing() {
+      const things = goodThings();
+      if (!things.length) return;
+      const others = things.filter((t) => !(pickedGoodThing && t.date === pickedGoodThing.date && t.text === pickedGoodThing.text));
+      const pool = others.length ? others : things;
+      pickedGoodThing = pool[Math.floor(Math.random() * pool.length)];
+      document.getElementById("good-things-card").innerHTML = goodThingsHTML();
     }
 
     function helpsHTML() {
@@ -2475,6 +2540,7 @@
       view("insights").innerHTML = `
         <header class="page-head"><h1>Insights</h1></header>
         <section class="card" id="calendar-card">${calendarHTML()}</section>
+        <section class="card good-things-card" id="good-things-card">${goodThingsHTML()}</section>
         <section class="card">${longerViewHTML()}</section>
         <section class="card">${helpsHTML()}</section>
         <section class="card">${rhythmHTML()}</section>
@@ -3196,6 +3262,7 @@
       "piece-done": closePiece,
       "piece-remove": removePiece,
       "open-prompt": openPrompt,
+      "good-thing-pick": pickGoodThing,
       "focus-exit": leaveFocus,
       "focus-next": focusNextPrompt,
       "done": finishToday,
