@@ -699,6 +699,7 @@
     <section id="view-history" class="view" hidden></section>
     <section id="view-insights" class="view" hidden></section>
     <section id="view-prompts" class="view" hidden></section>
+    <section id="view-data" class="view" hidden></section>
     <section id="view-entry" class="view" hidden></section>
   </main>
 
@@ -2557,34 +2558,59 @@
         <p class="muted">${escapeHTML(SETTINGS.rhythmNote)}</p>`;
     }
 
-    function dataSectionHTML() {
-      return `<h2>Your data</h2>
-        <p>Your pages are saved only in this browser, on this device. Nothing is sent anywhere.
-          Save a backup now and then, so clearing your browser or changing phones doesn't lose them.</p>
-        <p class="muted" id="backup-status">${escapeHTML(backupStatusText())}</p>
-        <div class="stack">
-          <button class="btn" data-action="backup-save">Save a backup</button>
-          <label class="btn" for="restore-file">Restore from backup</label>
-          <input type="file" id="restore-file" accept=".json,application/json" class="visually-hidden">
-        </div>
-        <h3>Try it out</h3>
-        <p class="muted small">Demo entries are marked "demo" and never replace your real pages.</p>
-        <div class="stack">
-          <button class="btn" data-action="demo-add">Add demo entries</button>
-          <button class="btn" data-action="demo-heavy">Preview a heavy week</button>
-          <button class="btn" data-action="demo-remove">Remove demo entries</button>
-        </div>`;
+    /* ---------------------------------------------------------------------
+       YOUR DATA: backups and demo pages live on their own page, reached from
+       the gear in the corner of Insights, so Insights only shows things about you.
+       --------------------------------------------------------------------- */
+    function renderData() {
+      view("data").innerHTML = `
+        <header class="page-head">
+          <button class="link-btn" data-action="back">‹ Back to Insights</button>
+          <h1>Your data</h1>
+        </header>
+        <section class="card">
+          <h2>Backups</h2>
+          <p>Your pages are saved only in this browser, on this device. Nothing is sent anywhere.
+            Save a backup now and then, so clearing your browser or changing phones doesn't lose them.</p>
+          <p class="muted" id="backup-status">${escapeHTML(backupStatusText())}</p>
+          <div class="stack">
+            <button class="btn" data-action="backup-save">Save a backup</button>
+            <label class="btn" for="restore-file">Restore from backup</label>
+            <input type="file" id="restore-file" accept=".json,application/json" class="visually-hidden">
+          </div>
+        </section>
+        <section class="card">
+          <h2>Try it out</h2>
+          <p class="muted small">Demo entries are marked "demo" and never replace your real pages.</p>
+          <div class="stack">
+            <button class="btn" data-action="demo-add">Add demo entries</button>
+            <button class="btn" data-action="demo-heavy">Preview a heavy week</button>
+            <button class="btn" data-action="demo-remove">Remove demo entries</button>
+          </div>
+        </section>`;
     }
+
+    // The gear in the corner of Insights opens Your data.
+    function dataButtonHTML() {
+      return `<button class="corner-btn" data-action="open-data" aria-label="Your data and backups">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>`;
+    }
+
+    // After a backup, restore or demo change, redraw whichever page you're on.
+    function rerenderCurrentView() { rerenderKeepingScroll(RENDERERS[currentView]); }
 
     function renderInsights() {
       view("insights").innerHTML = `
-        <header class="page-head"><h1>Insights</h1></header>
+        <header class="page-head with-corner"><h1>Insights</h1>${dataButtonHTML()}</header>
         <section class="card" id="calendar-card">${calendarHTML()}</section>
         <section class="card good-things-card" id="good-things-card">${goodThingsHTML()}</section>
         <section class="card">${longerViewHTML()}</section>
         <section class="card">${helpsHTML()}</section>
         <section class="card">${rhythmHTML()}</section>
-        <section class="card">${dataSectionHTML()}</section>
       `;
     }
 
@@ -2824,7 +2850,7 @@
           await navigator.share({ files: [file], title: "Evening Pages backup" });
         } catch (error) {
           if (error.name === "AbortError") return; // closed the share sheet: nothing saved
-          showToast("Couldn't open the share menu. Try again from Insights.");
+          showToast("Couldn't open the share menu. Try again from Your data.");
           return;
         }
         recordBackup();
@@ -2841,8 +2867,7 @@
         recordBackup();
         showToast("Backup saved to your downloads");
       }
-      if (currentView === "today") rerenderKeepingScroll(renderToday);
-      if (currentView === "insights") rerenderKeepingScroll(renderInsights);
+      if (currentView === "today" || currentView === "data") rerenderCurrentView();
     }
 
     function recordBackup() {
@@ -2971,7 +2996,7 @@
       const enabled = (backup.prefs?.enabledPromptIds || []).filter((id) => typeof id === "string" && restoredIds.has(id));
       if (enabled.length) data.prefs.enabledPromptIds = enabled;
       saveData();
-      renderInsights();
+      rerenderCurrentView();
       showToast(`Restored: ${added} new, ${updated} updated`);
       return restorePhotos(backup.photos);
     }
@@ -3202,7 +3227,7 @@
         added++;
       }
       saveData();
-      renderInsights();
+      rerenderCurrentView();
       showToast(`Added ${added} demo pages`);
     }
 
@@ -3222,7 +3247,7 @@
       }
       delete data.ui.checkinSnoozeUntil; // so the check-in card can show right away
       saveData();
-      renderInsights();
+      rerenderCurrentView();
       showToast(`Added a heavy week (${added} demo pages). Open Today to see the check-in.`);
     }
 
@@ -3235,7 +3260,7 @@
         }
       }
       saveData();
-      renderInsights();
+      rerenderCurrentView();
       showToast(removed ? `Removed ${removed} demo pages` : "There were no demo pages to remove");
     }
 
@@ -3249,12 +3274,14 @@
       history: renderHistory,
       insights: renderInsights,
       prompts: renderPrompts,
+      data: renderData,
       entry: renderEntry,
     };
 
     const ACTIONS = {
       "tab": (button) => showView(button.dataset.tab),
       "back": () => showView(currentTab),
+      "open-data": () => showView("data"),
       "pick-mood": (button) => pickMood(Number(button.dataset.mood)),
       "gentle-on": () => setGentle(true),
       "gentle-off": () => setGentle(false),
