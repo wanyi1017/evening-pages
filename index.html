@@ -2361,11 +2361,21 @@
     }
 
     // Last 30 days: a dot per day's mood and a line for the 7-day average.
+    // How many days the chart covers: since your first mood, at least a week and at most 30 days,
+    // so a new diary isn't three dots squeezed into the corner of an empty month.
+    function chartDays() {
+      const first = loggedMoods()[0]?.date;
+      return first ? Math.min(30, Math.max(7, daysBetween(first, todayKey()) + 1)) : 30;
+    }
+
+    // A dot per day's mood and, once there's a week of moods, a line for the 7-day average.
     function moodChartSVG() {
       const today = todayKey();
       const all = loggedMoods();
+      const span = chartDays();
+      const showAverage = all.length >= 7;
       const width = 320, height = 160, left = 46, right = 8, top = 10, bottom = 22;
-      const x = (i) => left + (i * (width - left - right)) / 29;
+      const x = (i) => left + (i * (width - left - right)) / (span - 1);
       const y = (mood) => top + ((5 - mood) * (height - top - bottom)) / 4;
 
       let grid = "";
@@ -2377,12 +2387,12 @@
       let dots = "";
       let path = "";
       let penDown = false;
-      for (let i = 0; i < 30; i++) {
-        const day = addDays(today, i - 29);
+      for (let i = 0; i < span; i++) {
+        const day = addDays(today, i - (span - 1));
         const mood = data.entries[day]?.mood;
         if (mood) dots += `<circle class="mood-point" cx="${x(i).toFixed(1)}" cy="${y(mood).toFixed(1)}" r="4"/>`;
         const windowMoods = moodsBetween(all, addDays(day, -6), day).map((m) => m.mood);
-        if (windowMoods.length >= 2) {
+        if (showAverage && windowMoods.length >= 2) {
           path += `${penDown ? "L" : "M"}${x(i).toFixed(1)} ${y(average(windowMoods)).toFixed(1)} `;
           penDown = true;
         } else {
@@ -2390,15 +2400,15 @@
         }
       }
 
-      const firstLabel = formatDate(addDays(today, -29), { month: "short", day: "numeric" });
-      return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Mood over the last 30 days">
+      const firstLabel = formatDate(addDays(today, -(span - 1)), { month: "short", day: "numeric" });
+      return `<svg class="chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Mood over the last ${span} days">
         ${grid}
-        <path class="avg-line" d="${path.trim()}"/>
+        ${showAverage ? `<path class="avg-line" d="${path.trim()}"/>` : ""}
         ${dots}
         <text class="axis-label" x="${left}" y="${height - 6}">${firstLabel}</text>
         <text class="axis-label" x="${width - right}" y="${height - 6}" text-anchor="end">Today</text>
       </svg>
-      <div class="legend"><span class="l-dot">Each day</span><span class="l-line">7-day average</span></div>`;
+      <div class="legend"><span class="l-dot">Each day</span>${showAverage ? `<span class="l-line">7-day average</span>` : ""}</div>`;
     }
 
     function comparisonSentence() {
@@ -2471,16 +2481,25 @@
         .slice(0, 10);
     }
 
+    // In the first week there's only one note about what's coming, not one per card, and the
+    // mood chart shows up as soon as there are two moods to draw.
     function longerViewHTML() {
-      if (loggedMoods().length < 7) {
+      const moods = loggedMoods().length;
+      if (moods < 2) {
         return `<h2>The longer view</h2>
-          <p class="muted">Once you've picked a mood on about seven days, gentle patterns will show up here.</p>`;
+          <p class="muted">As you pick a mood on more days, this is where you'll see how your days have felt over time, and what tends to come with your better days.</p>`;
+      }
+      if (moods < 7) {
+        return `<h2>The longer view</h2>
+          <p class="muted small">The last ${chartDays()} days</p>
+          ${moodChartSVG()}
+          <p class="muted">After about a week of moods, gentle patterns will show up here too, like what tends to come with your better days.</p>`;
       }
       const comparison = comparisonSentence();
       const weekdays = weekdaySentence();
       const words = brightDayWords();
       return `<h2>The longer view</h2>
-        <p class="muted small">The last 30 days</p>
+        <p class="muted small">The last ${chartDays()} days</p>
         ${moodChartSVG()}
         ${comparison ? `<p>${comparison}</p>` : ""}
         ${weekdays ? `<p>${weekdays}</p>` : ""}
@@ -2527,9 +2546,7 @@
       const helpful = helpfulThings();
       const head = `<h2>What seems to help</h2>
         <p class="muted small">Things you write about more on your Good and Bright days than on other days.</p>`;
-      if (helpful === null) {
-        return `${head}<p class="muted">Once you've picked a mood on about seven days, this will show what tends to come with your better days.</p>`;
-      }
+      if (helpful === null) return ""; // too early: The longer view already says what's coming
       if (!helpful.length) {
         return `${head}<p class="muted">Nothing stands out yet. Writing about what you did, like walks, friends, or sleep, helps this find patterns.</p>`;
       }
@@ -2604,12 +2621,13 @@
     function rerenderCurrentView() { rerenderKeepingScroll(RENDERERS[currentView]); }
 
     function renderInsights() {
+      const helps = helpsHTML(); // empty until there are enough moods to compare
       view("insights").innerHTML = `
         <header class="page-head with-corner"><h1>Insights</h1>${dataButtonHTML()}</header>
         <section class="card" id="calendar-card">${calendarHTML()}</section>
         <section class="card good-things-card" id="good-things-card">${goodThingsHTML()}</section>
         <section class="card">${longerViewHTML()}</section>
-        <section class="card">${helpsHTML()}</section>
+        ${helps ? `<section class="card">${helps}</section>` : ""}
         <section class="card">${rhythmHTML()}</section>
       `;
     }
