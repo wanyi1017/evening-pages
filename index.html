@@ -386,7 +386,13 @@
     body.focus-writing .prompt.is-focused { margin-top: 28px; animation: focus-in 0.35s ease; }
     body.focus-writing .prompt.is-focused .q { font-size: 1.2rem; }
     /* The answer box looks like the cards on the main page: soft edge and shadow, no thick focus ring. */
+    /* While writing, the box uses bigger text (21px, Wanyi's pick). The lines follow it:
+       --line is 1.75 times the font size, and --rule-lift grows by the same proportion as at 17px. */
     body.focus-writing .prompt.is-focused .writer textarea {
+      --writing-size: 21px;
+      --line: calc(var(--writing-size) * 1.75);
+      --rule-lift: calc(2.5px * 21 / 17);
+      font-size: var(--writing-size);
       min-height: 40vh;
       margin-top: 6px;
       padding: 18px 58px 18px 18px;
