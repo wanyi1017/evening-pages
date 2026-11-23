@@ -573,7 +573,8 @@
     .chart .axis-label { fill: var(--muted); font-size: 9px; font-family: inherit; }
     .chart .mood-point { fill: var(--accent); opacity: 0.45; }
     .chart .avg-line { fill: none; stroke: var(--accent-strong); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .legend { display: flex; gap: 16px; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .legend span { white-space: nowrap; } /* each label stays whole; a long one moves to the next line */
     .legend span::before { content: ""; display: inline-block; vertical-align: middle; margin-right: 6px; }
     .legend .l-dot::before { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0.45; }
     .legend .l-line::before { width: 16px; height: 2px; background: var(--accent-strong); }
@@ -2408,16 +2409,16 @@
         <text class="axis-label" x="${left}" y="${height - 6}">${firstLabel}</text>
         <text class="axis-label" x="${width - right}" y="${height - 6}" text-anchor="end">Today</text>
       </svg>
-      <div class="legend"><span class="l-dot">Each day</span>${showAverage ? `<span class="l-line">7-day average</span>` : ""}</div>`;
+      <div class="legend"><span class="l-dot">How each day felt</span>${showAverage ? `<span class="l-line">How your weeks have felt</span>` : ""}</div>`;
     }
 
     function comparisonSentence() {
       const { recent, before } = twoWeekAverages();
       if (recent === null || before === null) return "";
       const difference = recent - before;
-      if (difference > 0.3) return "The last two weeks have felt a little brighter than the two before.";
-      if (difference < -0.3) return "The last two weeks have felt a little heavier than the two before. Be gentle with yourself.";
-      return "The last two weeks have felt about the same as the two before.";
+      if (difference > 0.3) return "Your last two weeks have felt a little lighter than the two before. That's lovely to see.";
+      if (difference < -0.3) return "Your last two weeks have felt a bit heavier than the two before. That happens, and it's okay. Go easy on yourself.";
+      return "Your last two weeks have felt much like the two before, steady and familiar.";
     }
 
     function weekdaySentence() {
@@ -2432,8 +2433,8 @@
       averages.sort((a, b) => b.avg - a.avg);
       const brightest = averages[0];
       const heaviest = averages[averages.length - 1];
-      if (brightest.avg - heaviest.avg < 0.5) return "Your days of the week feel fairly even.";
-      return `${names[brightest.weekday]} tend to feel brightest, and ${names[heaviest.weekday]} tend to feel heaviest.`;
+      if (brightest.avg - heaviest.avg < 0.5) return "No day of the week stands out as harder than the others.";
+      return `${names[brightest.weekday]} seem to be kind to you. ${names[heaviest.weekday]} often ask a little more of you, so be gentle with yourself then.`;
     }
 
     // Split text into words. Intl.Segmenter understands Chinese (which has no
@@ -2503,7 +2504,7 @@
         ${moodChartSVG()}
         ${comparison ? `<p>${comparison}</p>` : ""}
         ${weekdays ? `<p>${weekdays}</p>` : ""}
-        ${words.length ? `<h3>Words from your Good and Bright days</h3>
+        ${words.length ? `<h3>Things that came up on your brighter days</h3>
           <div class="word-chips">${words.map(([word, count]) =>
             `<span class="word-chip">${escapeHTML(word)}<small>${count}</small></span>`).join("")}</div>` : ""}`;
     }
@@ -2545,7 +2546,7 @@
     function helpsHTML() {
       const helpful = helpfulThings();
       const head = `<h2>What seems to help</h2>
-        <p class="muted small">Things you write about more on your Good and Bright days than on other days.</p>`;
+        <p class="muted small">Little things that tend to show up on your better days. Maybe worth keeping close.</p>`;
       if (helpful === null) return ""; // too early: The longer view already says what's coming
       if (!helpful.length) {
         return `${head}<p class="muted">Nothing stands out yet. Writing about what you did, like walks, friends, or sleep, helps this find patterns.</p>`;
