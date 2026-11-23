@@ -347,7 +347,16 @@
       background: var(--piece); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px;
       white-space: pre-wrap; overflow-wrap: anywhere;
     }
-    .piece.just-saved { animation: piece-in 0.35s ease; }
+    .piece.just-saved { position: relative; animation: piece-in 0.35s ease; }
+    /* A few little stars fly out from a card you just saved (Wanyi asked for a sparkle with the Kept note). */
+    .save-star { position: absolute; left: 50%; top: 50%; width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+      pointer-events: none; fill: var(--gold); filter: drop-shadow(0 0 3px var(--gold)); animation: save-star 1.1s ease-out forwards; }
+    @keyframes save-star {
+      0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(45deg); }
+    }
+    @media (prefers-reduced-motion: reduce) { .save-star { display: none; } }
     @keyframes piece-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .piece.editing { background: var(--piece); border: 1px solid var(--border); border-radius: 14px; padding: 8px; }
     .piece-edit { min-height: 0; }
@@ -1890,6 +1899,26 @@
       renderPieces(promptId, pieces.length - 1);
       box.focus(); // stay in the box, ready for the next one
       showToast(keptText(), 1500);
+      sparkle(view("today").querySelector(`[data-pieces-for="${CSS.escape(promptId)}"] .piece.just-saved`));
+    }
+
+    // Nine four-point stars of a few sizes burst out from the new card, then remove themselves.
+    function sparkle(card) {
+      if (!card) return;
+      for (let i = 0; i < 9; i++) {
+        const angle = (Math.PI * 2 * i) / 9 + 0.3;
+        const star = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        star.setAttribute("viewBox", "0 0 24 24");
+        star.setAttribute("class", "save-star");
+        star.setAttribute("aria-hidden", "true");
+        star.innerHTML = `<path d="M12 2 Q12 12 22 12 Q12 12 12 22 Q12 12 2 12 Q12 12 12 2Z"/>`;
+        const reach = 0.75 + (i % 3) * 0.2; // some stars fly a little farther than others
+        star.style.setProperty("--dx", `${Math.round(Math.cos(angle) * 130 * reach)}px`);
+        star.style.setProperty("--dy", `${Math.round(Math.sin(angle) * 42 * reach)}px`);
+        star.style.setProperty("--size", `${[18, 22, 14][i % 3]}px`);
+        card.appendChild(star);
+        setTimeout(() => star.remove(), 1200);
+      }
     }
 
     // The little note after saving a piece (Wanyi's pick, option A). It counts what you've
