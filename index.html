@@ -478,18 +478,10 @@
     .entry-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .entry-top .date { font-weight: 600; font-size: 0.98rem; }
     .entry-top .mood-name { color: var(--muted); font-size: 0.85rem; }
-    .excerpt {
-      display: -webkit-box;
-      -webkit-line-clamp: 8;    /* show up to 8 lines, then "…" */
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      white-space: pre-line;
-      margin-top: 10px;
-      font-size: 0.95rem;
-      line-height: 1.7;
-    }
+    .excerpt { display: block; margin-top: 8px; font-size: 0.95rem; line-height: 1.6; }
+    .excerpt-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .excerpt-more { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
     .excerpt.empty { color: var(--muted); }
-    .excerpt-q { font-size: 0.8rem; color: var(--muted); }
     mark { background: var(--gold-soft); color: var(--gold-text); border-radius: 3px; padding: 0 2px; }
     .no-mood { width: 28px; height: 28px; border-radius: 50%; border: 1.5px dashed var(--moon-ring); flex-shrink: 0; }
     .tag {
@@ -2140,27 +2132,25 @@
       renderHistoryList();
     }
 
-    // A few lines of the day's writing, like flipping through a diary. Each answer starts with
-    // its question in small grey text, so you can tell which lines answer what.
-    // When searching, answers that match come first and matches are highlighted.
+    // A short preview of the day, so you can flip through many days at once: one line per
+    // question (its first piece), at most three, then how much more there is. Tap the day to
+    // read all of it, with its questions. When searching, the lines that match come first,
+    // and the piece shown for each question is one that matches.
     function diaryExcerptHTML(entry, query) {
-      let answers = allAnswers(entry);
+      let answers = allAnswers(entry).filter((a) => shownPieces(a).length);
       if (!answers.length) return `<span class="excerpt empty">A mood, no words.</span>`;
-      if (query) {
-        const matches = (a) => a.text.toLowerCase().includes(query);
-        answers = [...answers.filter(matches), ...answers.filter((a) => !matches(a))];
-      }
+      const matches = (text) => !!query && text.toLowerCase().includes(query);
+      if (query) answers = [...answers.filter((a) => matches(a.text)), ...answers.filter((a) => !matches(a.text))];
       const pattern = query && new RegExp(escapeHTML(query).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
       const mark = (html) => (pattern ? html.replace(pattern, (match) => `<mark>${match}</mark>`) : html);
-      let room = 700; // characters of writing to show at most
-      const parts = [];
-      for (const answer of answers) {
-        if (room <= 0) break;
-        const text = shownPieces(answer).join("\n").slice(0, room);
-        room -= text.length;
-        parts.push(`<span class="excerpt-q">${escapeHTML(answer.question)}</span>\n${mark(escapeHTML(text))}`);
-      }
-      return `<span class="excerpt">${parts.join("\n")}</span>`;
+      const lines = answers.slice(0, 3).map((answer) => {
+        const pieces = shownPieces(answer);
+        const piece = pieces.find(matches) || pieces[0];
+        return `<span class="excerpt-line">${mark(escapeHTML(piece.trim().split("\n")[0]))}</span>`;
+      });
+      const total = answers.reduce((sum, answer) => sum + shownPieces(answer).length, 0);
+      const more = total - lines.length;
+      return `<span class="excerpt">${lines.join("")}${more > 0 ? `<span class="excerpt-more">and ${more} more</span>` : ""}</span>`;
     }
 
     function renderHistoryList() {
