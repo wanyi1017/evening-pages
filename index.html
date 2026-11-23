@@ -52,6 +52,7 @@
       --moon-ring: #6E6A80;
       --rule: rgba(201, 224, 235, 0.16); /* notebook lines in the answer boxes */
       --piece: #353140;        /* saved pieces under a question */
+      --focus-bar: rgba(38, 36, 35, 0.92); /* the bottom bar while writing */
       --danger: #E39A8F;
       --shadow: none;
       /* "Let it go" scene: one soft moonlight glow over a denim-to-night sky. */
@@ -87,6 +88,7 @@
       --moon-ring: #A49B88;
       --rule: rgba(124, 154, 151, 0.30);
       --piece: #FBF6F1;
+      --focus-bar: rgba(248, 243, 239, 0.94);
       --danger: #A5503F;
       --shadow: 0 1px 3px rgba(60, 50, 30, 0.08);
       /* "Let it go" scene: one soft teal glow over deep teal fading to charcoal. */
@@ -303,9 +305,11 @@
     .help-name::first-letter { text-transform: uppercase; }
     .crisis-links { display: flex; gap: 10px; flex-wrap: wrap; }
 
-    .moon-picker { display: flex; justify-content: space-between; gap: 4px; margin-top: 12px; }
+    /* Five equal columns that can shrink: on a narrow screen the moons and names get smaller
+       instead of pushing "Bright" out of the card. */
+    .moon-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 12px; }
     .moon-btn {
-      flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -314,9 +318,12 @@
       border-radius: 14px;
       border: 1px solid transparent;
       background: transparent;
-      font-size: 0.8rem;
+      font-size: min(0.8rem, 3.3vw);
       color: var(--muted);
     }
+    .moon-picker .moon { width: 100%; max-width: 40px; height: auto; }
+    .moon-filter .moon { width: 100%; max-width: 28px; height: auto; }
+    .moon-btn span { max-width: 100%; overflow-wrap: anywhere; }
     .moon-btn[aria-pressed="true"] {
       background: var(--accent-soft);
       border-color: var(--accent);
@@ -363,22 +370,30 @@
     .piece-save svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
     /* Focus mode: while writing, only the question being answered stays on screen. */
+    /* The house and the arrow sit in a bar at the bottom of the screen, where a thumb reaches
+       (Wanyi's option A): a white house to go back, a dark arrow that stands out for "next". */
     .focus-bar { display: none; }
-    body.focus-writing .focus-bar { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; }
-    .focus-count { font-size: 0.85rem; text-align: center; letter-spacing: 0.04em; }
-    .focus-icon {
-      width: 44px; height: 44px; padding: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: none; border: none; border-radius: 50%; cursor: pointer;
+    body.focus-writing .focus-bar {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+      display: grid; grid-template-columns: 56px 1fr 56px; align-items: center;
+      padding: 10px max(20px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+      background: var(--focus-bar); border-top: 1px solid var(--border);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     }
-    .focus-icon[data-action="focus-exit"] { margin-left: -11px; } /* line the icons up with the question's edges */
-    .focus-icon[data-action="focus-next"] { margin-right: -11px; justify-self: end; }
-    .focus-icon[hidden] { display: flex; visibility: hidden; } /* keeps "2 of 5" centered on the last question */
-    .focus-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    body.focus-writing { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+    .focus-count { font-size: 0.85rem; text-align: center; letter-spacing: 0.04em; color: var(--muted); }
+    .focus-icon {
+      width: 56px; height: 56px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text); box-shadow: var(--shadow);
+    }
+    .focus-icon[data-action="focus-next"] { justify-self: end; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .focus-icon:active { transform: scale(0.95); }
+    .focus-icon[hidden] { display: flex; visibility: hidden; } /* keeps "5 of 5" centered on the last question */
+    .focus-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
     /* The question sits on the bright top of the gradient, so it uses the same colors as the page title. */
-    body.focus-writing .focus-icon,
     body.focus-writing .prompt.is-focused .q { color: var(--head-text); }
-    body.focus-writing .focus-count,
     body.focus-writing .prompt.is-focused .hint { color: var(--head-muted); }
     body.focus-writing #view-today > :not(.prompts-section),
     body.focus-writing .prompts-section > :not(.focus-bar):not(.is-focused),
@@ -447,7 +462,7 @@
     /* ===================================================================
        HISTORY
        =================================================================== */
-    .moon-filter { display: flex; justify-content: space-between; gap: 4px; margin: 12px 0; }
+    .moon-filter { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 12px 0; }
     .month-heading { margin: 22px 0 6px; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
     /* Each History entry is a small diary page: date line, then a few lines of writing. */
     .entry-row {
@@ -548,8 +563,8 @@
     .cal-summary { margin: 4px 0 0; }
     .mood-legend-title { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); font-weight: 500; }
     .cal-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--moon-ring); margin-top: 8px; }
-    .mood-counts { display: flex; justify-content: space-between; margin-top: 8px; }
-    .mood-count { display: flex; flex-direction: column; align-items: center; font-size: 0.78rem; color: var(--muted); }
+    .mood-counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+    .mood-count { min-width: 0; display: flex; flex-direction: column; align-items: center; font-size: min(0.78rem, 3.2vw); color: var(--muted); }
     .mood-count strong { color: var(--text); font-size: 0.95rem; }
 
     .chart { width: 100%; height: auto; margin-top: 10px; }
