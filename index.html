@@ -358,9 +358,12 @@
 
     /* The writing box, with a round check mark that keeps what's written as a new piece. */
     .writer { position: relative; }
-    .writer textarea { padding-right: 58px; }
+    /* display: block removes the few pixels of space under an inline box, so the check mark
+       (placed from the bottom of .writer) really sits 16px above the box's bottom edge. */
+    .writer textarea { display: block; padding-right: 66px; } /* room for the check mark: 16px gap + 40px button + 10px */
     .piece-save {
-      position: absolute; right: 8px; bottom: 8px; width: 40px; height: 40px; padding: 0;
+      /* 16px in from the box's edges, clear of its rounded corner (Wanyi: it shouldn't touch the edge). */
+      position: absolute; right: 16px; bottom: 16px; width: 40px; height: 40px; padding: 0;
       display: flex; align-items: center; justify-content: center;
       border: none; border-radius: 50%; background: var(--accent); color: var(--on-accent);
       transition: opacity 0.2s ease;
@@ -410,7 +413,7 @@
       font-size: var(--writing-size);
       min-height: 40vh;
       margin-top: 6px;
-      padding: 18px 58px 18px 18px;
+      padding: 18px 66px 18px 18px;
       border: 1px solid var(--border);
       border-radius: 18px;
       background: var(--notebook-lines), var(--surface) padding-box;
