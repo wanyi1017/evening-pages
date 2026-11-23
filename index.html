@@ -463,7 +463,12 @@
        HISTORY
        =================================================================== */
     .moon-filter { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 12px 0; }
-    .month-heading { margin: 22px 0 6px; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    /* Month names sit on a soft pill, so they stay readable over any part of the background fade. */
+    .month-heading {
+      display: inline-block; margin: 22px 0 6px; padding: 3px 12px; border-radius: 999px;
+      font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text);
+      background: var(--surface); box-shadow: var(--shadow);
+    }
     /* Each History entry is a small diary page: date line, then a few lines of writing. */
     .entry-row {
       display: block;
@@ -483,7 +488,6 @@
     .excerpt-more { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
     .excerpt.empty { color: var(--muted); }
     mark { background: var(--gold-soft); color: var(--gold-text); border-radius: 3px; padding: 0 2px; }
-    .no-mood { width: 28px; height: 28px; border-radius: 50%; border: 1.5px dashed var(--moon-ring); flex-shrink: 0; }
     .tag {
       font-size: 0.72rem;
       padding: 1px 8px;
@@ -1985,7 +1989,7 @@
     function makePaper(day, entry) {
       const texts = Object.values(entry.answers || {}).map((a) => a.text.trim()).filter(Boolean);
       let text = texts.length ? texts.join("\n\n") : moodName(entry.mood);
-      if (text.length > 360) text = text.slice(0, 360) + "…";
+      if (text.length > 360) text = text.slice(0, 360).replace(/[\s.。,，!！?？…]+$/, "") + "…"; // no "....": drop the cut sentence's own end mark first
       const paper = document.createElement("div");
       paper.className = "paper";
       paper.innerHTML = `<div class="paper-sheet"></div>
@@ -2153,6 +2157,14 @@
       return `<span class="excerpt">${lines.join("")}${more > 0 ? `<span class="excerpt-more">and ${more} more</span>` : ""}</span>`;
     }
 
+    // When a search or a mood finds nothing, say what was looked for, gently.
+    function noMatchText(query) {
+      const mood = historyMood && moodName(historyMood);
+      if (query && mood) return `Nothing found for "${historyQuery.trim()}" on ${mood} days.`;
+      if (query) return `Nothing found for "${historyQuery.trim()}".`;
+      return `No ${mood} days here.`;
+    }
+
     function renderHistoryList() {
       const query = historyQuery.trim().toLowerCase();
       const days = writtenDays().reverse().filter((day) => {
@@ -2168,7 +2180,7 @@
         return;
       }
       if (!days.length) {
-        list.innerHTML = `<p class="empty-state">No pages match that.</p>`;
+        list.innerHTML = `<p class="empty-state">${escapeHTML(noMatchText(query))}</p>`;
         return;
       }
 
@@ -2183,7 +2195,7 @@
         const entry = data.entries[day];
         html += `<button class="entry-row" data-action="open-entry" data-date="${day}">
           <span class="entry-top">
-            ${entry.mood ? moonSVG(entry.mood, 28) : `<span class="no-mood" aria-hidden="true"></span>`}
+            ${entry.mood ? moonSVG(entry.mood, 28) : ""}
             <span class="date">${formatDate(day, { weekday: "long", month: "short", day: "numeric" })}</span>
             ${entry.mood ? `<span class="mood-name">${escapeHTML(moodName(entry.mood))}</span>` : ""}
             ${entry.released ? `<span class="tag">let go</span>` : ""}
