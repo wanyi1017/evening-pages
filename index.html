@@ -678,6 +678,8 @@
       z-index: 20;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* While writing, notes float just above the bottom bar instead of behind it. */
+    body.focus-writing .toast { bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 30; }
 
     .visually-hidden {
       position: absolute;
@@ -1137,12 +1139,12 @@
       };
     }
 
-    function showToast(message) {
+    function showToast(message, duration = 2800) {
       const toast = document.getElementById("toast");
       toast.textContent = message;
       toast.classList.add("show");
       clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => toast.classList.remove("show"), 2800);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), duration);
     }
 
     // Grow a text box to fit what's written in it.
@@ -1887,6 +1889,15 @@
       storePieces(promptId, box.dataset.question, pieces);
       renderPieces(promptId, pieces.length - 1);
       box.focus(); // stay in the box, ready for the next one
+      showToast(keptText(), 1500);
+    }
+
+    // The little note after saving a piece (Wanyi's pick, option A). It counts what you've
+    // kept today, never what's left.
+    function keptText() {
+      const entry = data.entries[renderedDay];
+      const kept = Object.values(entry?.answers || {}).reduce((sum, answer) => sum + piecesOf(answer).filter((p) => p.trim()).length, 0);
+      return kept <= 1 ? "✓ Kept ✦ Your first one today." : `✓ Kept ✦ That's ${kept} today.`;
     }
 
     function editPiece(button) {
