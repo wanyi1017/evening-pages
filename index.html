@@ -53,7 +53,7 @@
       --rule: rgba(201, 224, 235, 0.16); /* notebook lines in the answer boxes */
       --piece: #353140;        /* saved pieces under a question */
       --focus-bar: rgba(38, 36, 35, 0.92); /* the bottom bar while writing */
-      --shower-1: #F5CF6B; --shower-2: #FFE8A3; --shower-3: #FFF6D6; /* gold stars in the star shower (Wanyi's pick) */
+      --shower-1: #F5CF6B; --shower-2: #FFE8A3; --shower-3: #FFF6D6; /* the gold stars that pop out when you save (Wanyi's pick) */
       --danger: #E39A8F;
       --shadow: none;
       /* "Let it go" scene: one soft moonlight glow over a denim-to-night sky. */
@@ -350,23 +350,26 @@
       white-space: pre-wrap; overflow-wrap: anywhere;
     }
     .piece.just-saved { animation: piece-in 0.35s ease; }
-    /* A light shower of little stars falls from the top of the screen when you save a piece
-       (Wanyi's pick, option E). The layer covers the screen but never takes a tap. */
-    .star-shower { position: fixed; inset: 0; z-index: 25; pointer-events: none; overflow: hidden; }
-    .shower-star {
-      position: absolute; top: -50px; width: var(--size); height: var(--size); opacity: 0;
+    /* When you save a piece, three stars leap out from behind the Kept note, spin a full turn in
+       the air, and drop back down behind it (Wanyi's pick, the spinning jump). The layer sits
+       under the note, so the stars hide behind it at the start and the end, and never takes a tap. */
+    .star-pop { position: fixed; inset: 0; z-index: 15; pointer-events: none; overflow: hidden; }
+    .pop-star {
+      position: absolute; width: var(--size); height: var(--size); opacity: 0;
       --color: var(--shower-1); fill: var(--color); filter: drop-shadow(0 0 3px var(--color));
-      animation: shower-fall var(--time) ease-in var(--delay) forwards;
+      animation: star-jump 1.4s var(--delay) forwards;
     }
-    .shower-star.tone-2 { --color: var(--shower-2); }
-    .shower-star.tone-3 { --color: var(--shower-3); }
-    :root[data-theme="light"] .shower-star.tone-2 { filter: none; } /* black stars look crisp without a glow */
-    @keyframes shower-fall {
-      0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
-      10% { opacity: 1; }
-      100% { opacity: 0; transform: translate(var(--dx), 70vh) rotate(200deg); }
+    .pop-star.tone-2 { --color: var(--shower-2); }
+    .pop-star.tone-3 { --color: var(--shower-3); }
+    :root[data-theme="light"] .pop-star.tone-2 { filter: none; } /* black stars look crisp without a glow */
+    @keyframes star-jump {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+           animation-timing-function: cubic-bezier(.2, .7, .4, 1); }          /* leap up, slowing near the top */
+      48% { transform: translate(calc(-50% + var(--dx) * 0.5), calc(-50% + var(--dy) * 1.9)) scale(1.1) rotate(200deg);
+            animation-timing-function: cubic-bezier(.6, 0, .8, .4); }          /* then fall, speeding up */
+      100% { opacity: 1; transform: translate(calc(-50% + var(--dx) * 0.7), -50%) scale(0.6) rotate(400deg); }  /* back behind the note */
     }
-    @media (prefers-reduced-motion: reduce) { .star-shower { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .star-pop { display: none; } }
     @keyframes piece-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .piece.editing { background: var(--piece); border: 1px solid var(--border); border-radius: 14px; padding: 8px; }
     .piece-edit { min-height: 0; }
@@ -1909,37 +1912,41 @@
       renderPieces(promptId, pieces.length - 1);
       box.focus(); // stay in the box, ready for the next one
       showToast(keptText(), 1500);
-      starShower();
+      starPop();
     }
 
-    // Three bigger stars of different sizes (one in each shade) drift down from the top of the
-    // screen, spinning and fading, then the whole layer removes itself.
+    // Three stars of different sizes (one in each shade) leap out from behind the Kept note,
+    // spinning: the biggest straight up, the others up to the left and right.
     const STAR_FOUR = "M12 2 Q12 12 22 12 Q12 12 12 22 Q12 12 2 12 Q12 12 12 2Z";
     const STAR_FIVE = "M12 2l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.1 5.9 20.4l1.3-6.7-5-4.7 6.8-.8z";
-    const SHOWER_STARS = [
-      { left: 18, size: 30, shape: STAR_FIVE, tone: 3, dx: -14, time: 2.2, delay: 0 },   // pale gold
-      { left: 52, size: 44, shape: STAR_FOUR, tone: 1, dx: 10, time: 2.6, delay: 180 },  // the biggest, gold
-      { left: 80, size: 24, shape: STAR_FIVE, tone: 2, dx: -8, time: 2.0, delay: 360 },  // black in light mode
+    const POP_STARS = [
+      { size: 30, shape: STAR_FIVE, tone: 3, dx: -104, dy: -46, spin: -18, delay: 60 },  // pale gold, left
+      { size: 44, shape: STAR_FOUR, tone: 1, dx: 0, dy: -60, spin: 45, delay: 0 },       // the biggest, gold, up
+      { size: 24, shape: STAR_FIVE, tone: 2, dx: 100, dy: -42, spin: 20, delay: 120 },   // black in light mode, right
+      // (each lands fully above the note: half the note's height plus half the star's)
     ];
-    function starShower() {
-      document.querySelector(".star-shower")?.remove(); // a quick second save starts a fresh shower
+    function starPop() {
+      document.querySelector(".star-pop")?.remove(); // a quick second save starts fresh
+      const note = document.getElementById("toast").getBoundingClientRect();
       const layer = document.createElement("div");
-      layer.className = "star-shower";
+      layer.className = "star-pop";
       layer.setAttribute("aria-hidden", "true");
-      SHOWER_STARS.forEach((spec) => {
+      for (const spec of POP_STARS) {
         const star = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         star.setAttribute("viewBox", "0 0 24 24");
-        star.setAttribute("class", `shower-star tone-${spec.tone}`);
+        star.setAttribute("class", `pop-star tone-${spec.tone}`);
         star.innerHTML = `<path d="${spec.shape}"/>`;
-        star.style.left = `${spec.left}%`;
+        star.style.left = `${note.left + note.width / 2}px`; // every star starts behind the note's middle
+        star.style.top = `${note.top + note.height / 2}px`;
         star.style.setProperty("--size", `${spec.size}px`);
         star.style.setProperty("--dx", `${spec.dx}px`);
-        star.style.setProperty("--time", `${spec.time}s`);
+        star.style.setProperty("--dy", `${spec.dy}px`);
+        star.style.setProperty("--spin", `${spec.spin}deg`);
         star.style.setProperty("--delay", `${spec.delay}ms`);
         layer.appendChild(star);
-      });
+      }
       document.body.appendChild(layer);
-      setTimeout(() => layer.remove(), 3500);
+      setTimeout(() => layer.remove(), 1800);
     }
 
     // The little note after saving a piece (Wanyi's pick, option A). It counts what you've
